@@ -1,0 +1,2658 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rancangan Tampilan Antarmuka — Prediksi PM2.5 DKI Jakarta</title>
+    <style>
+      :root {
+        --bg: #e8e8e6;
+        --surface: #ffffff;
+        --surface-2: #fafafa;
+        --line: #dedede;
+        --line-2: #efefef;
+        --ink: #1c1c1c;
+        --sub: #5b5b5b;
+        --muted: #8c8c8c;
+        --accent: #262626;
+        --accent-soft: #f0f0f0;
+        --accent-line: #c4c4c4;
+        --spatial: #1c1c1c;
+        --spatial-soft: #f4f4f2;
+        --spatial-line: #d2d2ce;
+        --baik: #2e7d4f;
+        --baik-bg: #e7f0ea;
+        --sedang: #2a5f9e;
+        --sedang-bg: #e6ecf3;
+        --tdksehat: #b08300;
+        --tdksehat-bg: #f6efdc;
+        --sgttdksehat: #b23a32;
+        --sgttdksehat-bg: #f4e6e5;
+        --berbahaya: #232323;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Arial,
+          sans-serif;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        padding: 44px 20px;
+        line-height: 1.45;
+      }
+      .stage {
+        max-width: 1080px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 56px;
+      }
+      .frameLabel {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--sub);
+        margin-bottom: 12px;
+      }
+      .caption {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 12px;
+        line-height: 1.65;
+      }
+      .caption b {
+        color: var(--sub);
+      }
+
+      .frame {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        overflow: hidden;
+        display: flex;
+        min-height: 540px;
+      }
+      .side {
+        width: 186px;
+        background: var(--surface-2);
+        border-right: 1px solid var(--line);
+        padding: 20px 14px;
+        flex-shrink: 0;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 24px;
+      }
+      .brandMark {
+        width: 26px;
+        height: 26px;
+        border-radius: 2px;
+        background: var(--ink);
+        flex-shrink: 0;
+      }
+      .brandText {
+        font-size: 12.5px;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+      .brandText span {
+        display: block;
+        font-size: 10px;
+        font-weight: 500;
+        color: var(--muted);
+      }
+      .nav {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .nav .item {
+        font-size: 13px;
+        color: var(--sub);
+        padding: 9px 12px;
+        border-radius: 3px;
+      }
+      .nav .item.active {
+        background: var(--ink);
+        color: #fff;
+        font-weight: 600;
+        border: 1px solid var(--ink);
+      }
+      .sideFoot {
+        margin-top: 26px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        font-size: 10.5px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .main {
+        flex: 1;
+        padding: 24px 26px 28px;
+        min-width: 0;
+      }
+      h2.title {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 3px;
+      }
+      .subt {
+        font-size: 12.5px;
+        color: var(--sub);
+        margin-bottom: 20px;
+      }
+      .lbl {
+        font-size: 10.5px;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 700;
+        margin: 0 0 9px;
+      }
+
+      .pills {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+      .pill {
+        font-size: 12px;
+        color: var(--sub);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 7px 12px;
+      }
+      .pill.active {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fff;
+        font-weight: 600;
+      }
+      .toggle {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 16px;
+      }
+      .toggle span {
+        font-size: 12px;
+        padding: 8px 17px;
+        color: var(--sub);
+      }
+      .toggle span.on {
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .banner {
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+        font-size: 11.5px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--tdksehat);
+        border-radius: 0;
+        padding: 10px 12px;
+        margin-bottom: 16px;
+        color: var(--sub);
+        line-height: 1.55;
+      }
+      .banner .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--tdksehat);
+        margin-top: 5px;
+        flex-shrink: 0;
+      }
+
+      .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: 16px;
+        align-items: start;
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--surface);
+        padding: 15px;
+      }
+      .cardTitle {
+        font-size: 11.5px;
+        color: var(--sub);
+        font-weight: 600;
+        margin-bottom: 13px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .cardTitle em {
+        font-style: normal;
+        font-size: 10.5px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      /* ---------- kelompok variabel ---------- */
+      .grp {
+        border-top: 1px solid var(--line-2);
+        padding-top: 11px;
+        margin-top: 13px;
+      }
+      .grp:first-of-type {
+        border-top: none;
+        padding-top: 0;
+        margin-top: 0;
+      }
+      .grpHead {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 10px;
+      }
+      .grpDot {
+        width: 8px;
+        height: 8px;
+        border-radius: 0;
+        flex-shrink: 0;
+      }
+      .grpName {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      .grpCount {
+        font-size: 9.5px;
+        color: var(--muted);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 100px;
+        padding: 1px 7px;
+        font-weight: 600;
+      }
+      .grpNote {
+        font-size: 10px;
+        color: var(--muted);
+        margin-left: auto;
+        font-style: italic;
+      }
+
+      .grp.spatial {
+        background: var(--spatial-soft);
+        border: 1px solid var(--spatial-line);
+        border-left: 3px solid var(--ink);
+        border-radius: 0;
+        padding: 12px;
+        margin-top: 13px;
+      }
+      .grp.spatial .grpName {
+        color: var(--spatial);
+      }
+      .grp.spatial .grpCount {
+        background: #fff;
+        border-color: var(--spatial-line);
+        color: var(--spatial);
+      }
+
+      .derived {
+        background: var(--surface-2);
+        border: 1px dashed var(--line);
+        border-radius: 3px;
+        padding: 10px 12px;
+        margin-top: 13px;
+        font-size: 10.5px;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+      .derived b {
+        color: var(--sub);
+        font-weight: 600;
+      }
+
+      .sliderRow {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 9px;
+      }
+      .sliderRow:last-child {
+        margin-bottom: 0;
+      }
+      .sliderRow .name {
+        font-size: 11px;
+        color: var(--sub);
+        width: 82px;
+        flex-shrink: 0;
+      }
+      .track {
+        flex: 1;
+        height: 5px;
+        background: var(--line-2);
+        border-radius: 100px;
+        position: relative;
+      }
+      .fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 5px;
+        border-radius: 100px;
+        background: var(--accent-line);
+      }
+      .thumb {
+        position: absolute;
+        top: -4.5px;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: #fff;
+        border: 2.5px solid var(--accent-line);
+        margin-left: -6.5px;
+      }
+      .track.live .fill {
+        background: var(--accent);
+      }
+      .track.live .thumb {
+        border-color: var(--accent);
+      }
+      .track.sp .fill {
+        background: var(--spatial-line);
+      }
+      .track.sp .thumb {
+        border-color: var(--spatial-line);
+      }
+      .track.sp.live .fill {
+        background: var(--spatial);
+      }
+      .track.sp.live .thumb {
+        border-color: var(--spatial);
+      }
+      .val {
+        font-size: 10.5px;
+        color: var(--ink);
+        width: 76px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .big {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin: 2px 0 9px;
+      }
+      .big .n {
+        font-size: 44px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.02em;
+      }
+      .big .u {
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .chip {
+        display: inline-block;
+        font-size: 11.5px;
+        font-weight: 600;
+        border-radius: 100px;
+        padding: 5px 13px;
+      }
+      .c-baik {
+        background: var(--baik-bg);
+        color: var(--baik);
+      }
+      .c-sedang {
+        background: var(--sedang-bg);
+        color: var(--sedang);
+      }
+      .meta {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 9px;
+        line-height: 1.6;
+      }
+
+      .h7 {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .hbox {
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 10px 6px;
+        text-align: center;
+        background: var(--surface);
+      }
+      .hbox .d {
+        font-size: 10px;
+        color: var(--muted);
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+      .hbox .dt {
+        font-size: 9.5px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .hbox .n {
+        font-size: 21px;
+        font-weight: 700;
+        line-height: 1.15;
+      }
+      .hbox .k {
+        font-size: 9px;
+        font-weight: 600;
+        margin-top: 5px;
+        border-radius: 100px;
+        padding: 2px 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11.5px;
+      }
+      th {
+        text-align: left;
+        font-size: 10px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 700;
+        padding: 8px 9px;
+        border-bottom: 1px solid var(--line);
+      }
+      td {
+        padding: 8px 9px;
+        border-bottom: 1px solid var(--line-2);
+        font-variant-numeric: tabular-nums;
+        color: var(--ink);
+      }
+      td.num,
+      th.num {
+        text-align: right;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 600;
+        border-radius: 100px;
+        padding: 2px 9px;
+      }
+
+      .stepper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+      .stepBtn {
+        width: 30px;
+        height: 30px;
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        background: var(--surface-2);
+        color: var(--sub);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .dateBox {
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 7px 15px;
+        font-size: 12.5px;
+        font-weight: 600;
+        background: var(--surface);
+      }
+      .stepHint {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .section {
+        margin-bottom: 20px;
+      }
+      .section h3 {
+        font-size: 13.5px;
+        font-weight: 700;
+        margin-bottom: 9px;
+      }
+      .section p {
+        font-size: 11.5px;
+        color: var(--sub);
+        line-height: 1.75;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 6px 14px;
+        font-size: 11.5px;
+        color: var(--sub);
+        line-height: 1.7;
+      }
+      .kv b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-size: 10.5px;
+        color: var(--sub);
+        margin-top: 10px;
+      }
+      .legend i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 3px;
+        margin-right: 5px;
+        vertical-align: middle;
+        font-style: normal;
+      }
+      .impbar {
+        height: 8px;
+        border-radius: 0;
+        background: #bdbdbd;
+      }
+      .impbar.sp {
+        background: var(--ink);
+      }
+      .impcell {
+        width: 190px;
+        padding-right: 14px;
+      }
+      tr.spRow td {
+        background: var(--spatial-soft);
+      }
+      tr.spRow td:first-child {
+        border-left: 3px solid var(--spatial);
+      }
+      .note {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 9px;
+        line-height: 1.6;
+      }
+      td.best {
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <!-- ==================================================================== -->
+      <!-- FRAME 1 — DASHBOARD MODE AKTUAL                                      -->
+      <!-- ==================================================================== -->
+      <div>
+        <div class="frameLabel">
+          Gambar L10.1 — Modul Dashboard (Mode Prediksi Aktual)
+        </div>
+        <div class="frame">
+          <div class="side">
+            <div class="brand">
+              <div class="brandMark"></div>
+              <div class="brandText">
+                Prediksi PM2.5<span>DKI Jakarta</span>
+              </div>
+            </div>
+            <div class="nav">
+              <div class="item active">Dashboard</div>
+              <div class="item">Evaluation</div>
+              <div class="item">Information</div>
+            </div>
+            <div class="sideFoot">
+              Data terakhir<br /><b>8 November 2025</b><br /><br />
+              Model XGBoost + PSO<br />7 horizon (t+1 … t+7)
+            </div>
+          </div>
+          <div class="main">
+            <h2 class="title">Prediksi PM2.5</h2>
+            <div class="subt">
+              Prediksi indeks ISPU PM2.5 satu sampai tujuh hari ke depan per
+              stasiun
+            </div>
+            <div class="lbl">Pilih Stasiun</div>
+            <div class="pills">
+              <span class="pill active">DKI1 Bundaran HI</span
+              ><span class="pill">DKI2 Kelapa Gading</span
+              ><span class="pill">DKI3 Jagakarsa</span
+              ><span class="pill">DKI4 Lubang Buaya</span
+              ><span class="pill">DKI5 Kebon Jeruk</span>
+            </div>
+            <div class="toggle">
+              <span class="on">Mode Aktual</span><span>Mode Simulasi</span>
+            </div>
+            <div class="split">
+              <div class="card">
+                <div class="cardTitle">
+                  Kondisi 8 November 2025 <em>terkunci</em>
+                </div>
+                <div class="grp spatial">
+                  <div class="grpHead">
+                    <span class="grpDot" style="background: #1c1c1c"></span
+                    ><span class="grpName">Variabel Spasial</span
+                    ><span class="grpCount">2 fitur</span
+                    ><span class="grpNote">novelty penelitian</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Luas RTH</span
+                    ><span class="track sp"
+                      ><span class="fill" style="width: 10%"></span
+                      ><span class="thumb" style="left: 10%"></span></span
+                    ><span class="val">0,273 km²</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Kepadatan</span
+                    ><span class="track sp"
+                      ><span class="fill" style="width: 50%"></span
+                      ><span class="thumb" style="left: 50%"></span></span
+                    ><span class="val">12.959 j/km²</span>
+                  </div>
+                </div>
+                <div class="grp">
+                  <div class="grpHead">
+                    <span class="grpDot" style="background: #b0b0b0"></span
+                    ><span class="grpName">Meteorologi</span
+                    ><span class="grpCount">7 fitur</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Suhu</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 62%"></span
+                      ><span class="thumb" style="left: 62%"></span></span
+                    ><span class="val">28,4 °C</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Kelembapan</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 76%"></span
+                      ><span class="thumb" style="left: 76%"></span></span
+                    ><span class="val">76 %</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Curah hujan</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 18%"></span
+                      ><span class="thumb" style="left: 18%"></span></span
+                    ><span class="val">4,6 mm</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Tutupan awan</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 68%"></span
+                      ><span class="thumb" style="left: 68%"></span></span
+                    ><span class="val">68 %</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Kec. angin</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 37%"></span
+                      ><span class="thumb" style="left: 37%"></span></span
+                    ><span class="val">9,2 km/j</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Tekanan</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 54%"></span
+                      ><span class="thumb" style="left: 54%"></span></span
+                    ><span class="val">1.009 hPa</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Arah angin</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 41%"></span
+                      ><span class="thumb" style="left: 41%"></span></span
+                    ><span class="val">148°</span>
+                  </div>
+                </div>
+                <div class="grp">
+                  <div class="grpHead">
+                    <span class="grpDot" style="background: #b0b0b0"></span
+                    ><span class="grpName">Polutan Udara</span
+                    ><span class="grpCount">6 fitur</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">PM2.5</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 45%"></span
+                      ><span class="thumb" style="left: 45%"></span></span
+                    ><span class="val">68 ISPU</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">PM10</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 49%"></span
+                      ><span class="thumb" style="left: 49%"></span></span
+                    ><span class="val">74 ISPU</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">SO₂</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 26%"></span
+                      ><span class="thumb" style="left: 26%"></span></span
+                    ><span class="val">21 ISPU</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">CO</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 31%"></span
+                      ><span class="thumb" style="left: 31%"></span></span
+                    ><span class="val">18 ISPU</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">O₃</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 38%"></span
+                      ><span class="thumb" style="left: 38%"></span></span
+                    ><span class="val">34 ISPU</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">NO₂</span
+                    ><span class="track"
+                      ><span class="fill" style="width: 22%"></span
+                      ><span class="thumb" style="left: 22%"></span></span
+                    ><span class="val">12 ISPU</span>
+                  </div>
+                </div>
+                <div class="derived">
+                  <b>Dihitung otomatis dari data historis — 6 fitur</b
+                  ><br />PM2.5 hari ke-1, ke-2, dan ke-3 sebelumnya · rata-rata
+                  bergerak 3 hari · bulan · hari dalam minggu
+                </div>
+                <div class="note" style="text-align: right; margin-top: 11px">
+                  Total <b>21 fitur masukan</b>
+                </div>
+              </div>
+              <div>
+                <div class="card">
+                  <div class="cardTitle">
+                    Prediksi Besok <em>9 November 2025</em>
+                  </div>
+                  <div class="big">
+                    <span class="n" style="color: var(--sedang)">72</span
+                    ><span class="u">ISPU</span>
+                  </div>
+                  <span class="chip c-sedang">Sedang</span>
+                  <div class="meta">
+                    Naik 4 poin dari hari terakhir (68). Kelompok sensitif
+                    disarankan mengurangi aktivitas luar ruangan yang lama.
+                  </div>
+                  <svg
+                    viewBox="0 0 300 100"
+                    style="
+                      width: 100%;
+                      height: auto;
+                      display: block;
+                      margin-top: 12px;
+                    "
+                  >
+                    <line
+                      x1="14"
+                      y1="29.3"
+                      x2="292"
+                      y2="29.3"
+                      stroke="#D8C48A"
+                      stroke-width="1"
+                      stroke-dasharray="4 4"
+                    />
+                    <text
+                      x="292"
+                      y="25.3"
+                      font-size="8"
+                      fill="#9A7A18"
+                      text-anchor="end"
+                      font-family="Inter,Arial"
+                    >
+                      ISPU 100
+                    </text>
+                    <line
+                      x1="14"
+                      y1="75.7"
+                      x2="292"
+                      y2="75.7"
+                      stroke="#B9CFC0"
+                      stroke-width="1"
+                      stroke-dasharray="4 4"
+                    />
+                    <text
+                      x="292"
+                      y="71.7"
+                      font-size="8"
+                      fill="#3F7A57"
+                      text-anchor="end"
+                      font-family="Inter,Arial"
+                    >
+                      ISPU 50
+                    </text>
+                    <polyline
+                      points="20,55.3 63,48.8 107,42.3 150,34.9 193,26.5 236,32.1 280,40.4"
+                      fill="none"
+                      stroke="#1C1C1C"
+                      stroke-width="2.2"
+                    />
+                    <circle cx="20" cy="55.3" r="3" fill="#1C1C1C" />
+                    <circle cx="63" cy="48.8" r="3" fill="#1C1C1C" />
+                    <circle cx="107" cy="42.3" r="3" fill="#1C1C1C" />
+                    <circle cx="150" cy="34.9" r="3" fill="#1C1C1C" />
+                    <circle cx="193" cy="26.5" r="3" fill="#1C1C1C" />
+                    <circle cx="236" cy="32.1" r="3" fill="#1C1C1C" />
+                    <circle cx="280" cy="40.4" r="3" fill="#1C1C1C" />
+                    <text
+                      x="20"
+                      y="98"
+                      font-size="8"
+                      fill="#9EB0BA"
+                      text-anchor="middle"
+                      font-family="Inter,Arial"
+                    >
+                      t+1
+                    </text>
+                    <text
+                      x="280"
+                      y="98"
+                      font-size="8"
+                      fill="#9EB0BA"
+                      text-anchor="middle"
+                      font-family="Inter,Arial"
+                    >
+                      t+7
+                    </text>
+                  </svg>
+                  <div class="note">
+                    Puncak diperkirakan pada t+5 (13 Nov) dengan 103 ISPU,
+                    melewati ambang kategori Tidak Sehat.
+                  </div>
+                </div>
+                <div class="card" style="margin-top: 16px">
+                  <div class="cardTitle">
+                    Status Seluruh Stasiun <em>prediksi t+1</em>
+                  </div>
+                  <table>
+                    <tr>
+                      <th>Stasiun</th>
+                      <th>Kecamatan</th>
+                      <th class="num">t+1</th>
+                      <th>Kategori</th>
+                    </tr>
+                    <tr>
+                      <td>DKI1</td>
+                      <td>Menteng</td>
+                      <td class="num">72</td>
+                      <td>
+                        <span
+                          class="tag"
+                          style="
+                            background: var(--sedang-bg);
+                            color: var(--sedang);
+                          "
+                          >Sedang</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>DKI2</td>
+                      <td>Kelapa Gading</td>
+                      <td class="num">88</td>
+                      <td>
+                        <span
+                          class="tag"
+                          style="
+                            background: var(--sedang-bg);
+                            color: var(--sedang);
+                          "
+                          >Sedang</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>DKI3</td>
+                      <td>Jagakarsa</td>
+                      <td class="num">47</td>
+                      <td>
+                        <span
+                          class="tag"
+                          style="background: var(--baik-bg); color: var(--baik)"
+                          >Baik</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>DKI4</td>
+                      <td>Cipayung</td>
+                      <td class="num">106</td>
+                      <td>
+                        <span
+                          class="tag"
+                          style="background: var(--tdksehat-bg); color: #8a6a00"
+                          >Tidak Sehat</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>DKI5</td>
+                      <td>Kebon Jeruk</td>
+                      <td class="num">81</td>
+                      <td>
+                        <span
+                          class="tag"
+                          style="
+                            background: var(--sedang-bg);
+                            color: var(--sedang);
+                          "
+                          >Sedang</span
+                        >
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="h7">
+              <div class="hbox">
+                <div class="d">t+1</div>
+                <div class="dt">9 Nov</div>
+                <div class="n" style="color: var(--sedang)">72</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+              <div class="hbox">
+                <div class="d">t+2</div>
+                <div class="dt">10 Nov</div>
+                <div class="n" style="color: var(--sedang)">79</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+              <div class="hbox">
+                <div class="d">t+3</div>
+                <div class="dt">11 Nov</div>
+                <div class="n" style="color: var(--sedang)">86</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+              <div class="hbox">
+                <div class="d">t+4</div>
+                <div class="dt">12 Nov</div>
+                <div class="n" style="color: var(--sedang)">94</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+              <div class="hbox">
+                <div class="d">t+5</div>
+                <div class="dt">13 Nov</div>
+                <div class="n" style="color: #8a6a00">103</div>
+                <div
+                  class="k"
+                  style="background: var(--tdksehat-bg); color: #8a6a00"
+                >
+                  Tdk Sehat
+                </div>
+              </div>
+              <div class="hbox">
+                <div class="d">t+6</div>
+                <div class="dt">14 Nov</div>
+                <div class="n" style="color: var(--sedang)">97</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+              <div class="hbox">
+                <div class="d">t+7</div>
+                <div class="dt">15 Nov</div>
+                <div class="n" style="color: var(--sedang)">88</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+            </div>
+            <div class="lbl" style="margin-top: 22px">
+              Peta Stasiun Pemantauan — Prediksi t+1
+            </div>
+            <div class="card" style="padding: 12px">
+              <svg
+                viewBox="0 0 700 260"
+                style="width: 100%; height: auto; display: block"
+              >
+                <path
+                  d="M18,54 C120,40 200,50 300,44 C400,38 500,48 600,42 L682,46
+           L682,236 C560,246 420,232 300,240 C200,246 110,236 18,242 Z"
+                  fill="#F1F5F7"
+                  stroke="#DDE6EA"
+                  stroke-width="1.2"
+                />
+                <path
+                  d="M18,54 C120,40 200,50 300,44 C400,38 500,48 600,42 L682,46"
+                  fill="none"
+                  stroke="#9FC4D6"
+                  stroke-width="2"
+                />
+                <text
+                  x="30"
+                  y="34"
+                  font-size="10.5"
+                  fill="#94AAB6"
+                  font-family="Inter,Arial"
+                >
+                  Teluk Jakarta
+                </text>
+                <circle
+                  cx="215"
+                  cy="118"
+                  r="26"
+                  fill="#2E7D4F"
+                  opacity="0.10"
+                />
+                <circle cx="546" cy="80" r="30" fill="#2E7D4F" opacity="0.10" />
+                <circle
+                  cx="223"
+                  cy="214"
+                  r="46"
+                  fill="#2E7D4F"
+                  opacity="0.16"
+                />
+                <circle
+                  cx="549"
+                  cy="180"
+                  r="34"
+                  fill="#2E7D4F"
+                  opacity="0.10"
+                />
+                <circle
+                  cx="120"
+                  cy="115"
+                  r="28"
+                  fill="#2E7D4F"
+                  opacity="0.10"
+                />
+                <circle
+                  cx="215"
+                  cy="118"
+                  r="9.5"
+                  fill="#2A5F9E"
+                  stroke="#fff"
+                  stroke-width="2.5"
+                />
+                <text
+                  x="215"
+                  y="146"
+                  font-size="10"
+                  fill="#5A7280"
+                  text-anchor="middle"
+                  font-family="Inter,Arial"
+                >
+                  DKI1 · 72
+                </text>
+                <circle
+                  cx="546"
+                  cy="80"
+                  r="9.5"
+                  fill="#2A5F9E"
+                  stroke="#fff"
+                  stroke-width="2.5"
+                />
+                <text
+                  x="546"
+                  y="108"
+                  font-size="10"
+                  fill="#5A7280"
+                  text-anchor="middle"
+                  font-family="Inter,Arial"
+                >
+                  DKI2 · 88
+                </text>
+                <circle
+                  cx="223"
+                  cy="214"
+                  r="9.5"
+                  fill="#2E7D4F"
+                  stroke="#fff"
+                  stroke-width="2.5"
+                />
+                <text
+                  x="223"
+                  y="242"
+                  font-size="10"
+                  fill="#5A7280"
+                  text-anchor="middle"
+                  font-family="Inter,Arial"
+                >
+                  DKI3 · 47
+                </text>
+                <circle
+                  cx="549"
+                  cy="180"
+                  r="9.5"
+                  fill="#B08300"
+                  stroke="#fff"
+                  stroke-width="2.5"
+                />
+                <text
+                  x="549"
+                  y="208"
+                  font-size="10"
+                  fill="#5A7280"
+                  text-anchor="middle"
+                  font-family="Inter,Arial"
+                >
+                  DKI4 · 106
+                </text>
+                <circle
+                  cx="120"
+                  cy="115"
+                  r="9.5"
+                  fill="#2A5F9E"
+                  stroke="#fff"
+                  stroke-width="2.5"
+                />
+                <text
+                  x="120"
+                  y="143"
+                  font-size="10"
+                  fill="#5A7280"
+                  text-anchor="middle"
+                  font-family="Inter,Arial"
+                >
+                  DKI5 · 81
+                </text>
+              </svg>
+              <div class="legend">
+                <span><i style="background: var(--baik)"></i>Baik (0–50)</span>
+                <span
+                  ><i style="background: var(--sedang)"></i>Sedang
+                  (51–100)</span
+                >
+                <span
+                  ><i style="background: var(--tdksehat)"></i>Tidak Sehat
+                  (101–200)</span
+                >
+                <span
+                  ><i style="background: var(--sgttdksehat)"></i>Sangat Tidak
+                  Sehat (201–300)</span
+                >
+                <span
+                  ><i style="background: #bfe0cd"></i>Luas RTH kecamatan</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="caption">
+          <b>Interaksi:</b> pengguna memilih stasiun, lalu sistem menampilkan
+          prediksi t+1 sampai t+7 beserta kategori ISPU. Variabel masukan
+          dikelompokkan menjadi variabel spasial, meteorologi, polutan udara,
+          dan fitur turunan. Pada mode aktual seluruh <i>slider</i> terkunci
+          pada nilai tanggal terakhir dataset.
+        </div>
+      </div>
+
+      <!-- ==================================================================== -->
+      <!-- FRAME 2 — DASHBOARD MODE SIMULASI                                    -->
+      <!-- ==================================================================== -->
+      <div>
+        <div class="frameLabel">
+          Gambar L10.2 — Modul Dashboard (Mode Simulasi)
+        </div>
+        <div class="frame">
+          <div class="side">
+            <div class="brand">
+              <div class="brandMark"></div>
+              <div class="brandText">
+                Prediksi PM2.5<span>DKI Jakarta</span>
+              </div>
+            </div>
+            <div class="nav">
+              <div class="item active">Dashboard</div>
+              <div class="item">Evaluation</div>
+              <div class="item">Information</div>
+            </div>
+            <div class="sideFoot">
+              Data terakhir<br /><b>8 November 2025</b><br /><br />
+              Model XGBoost + PSO<br />7 horizon (t+1 … t+7)
+            </div>
+          </div>
+          <div class="main">
+            <h2 class="title">Prediksi PM2.5</h2>
+            <div class="subt">
+              Simulasi pengaruh perubahan variabel terhadap hasil prediksi
+            </div>
+            <div class="lbl">Pilih Stasiun</div>
+            <div class="pills">
+              <span class="pill active">DKI1 Bundaran HI</span
+              ><span class="pill">DKI2 Kelapa Gading</span
+              ><span class="pill">DKI3 Jagakarsa</span
+              ><span class="pill">DKI4 Lubang Buaya</span
+              ><span class="pill">DKI5 Kebon Jeruk</span>
+            </div>
+            <div class="toggle">
+              <span>Mode Aktual</span><span class="on">Mode Simulasi</span>
+            </div>
+            <div class="banner">
+              <span class="dot"></span>
+              <span
+                >Hasil pada mode simulasi
+                <b>bukan prediksi kondisi sebenarnya</b>. Nilai variabel diatur
+                oleh pengguna dan hanya digunakan untuk mengamati pengaruh
+                perubahan terhadap keluaran model.</span
+              >
+            </div>
+            <div class="split">
+              <div class="card">
+                <div class="cardTitle">
+                  Atur Nilai Variabel <em>dapat digeser</em>
+                </div>
+                <div class="grp spatial">
+                  <div class="grpHead">
+                    <span class="grpDot" style="background: #1c1c1c"></span
+                    ><span class="grpName">Variabel Spasial</span
+                    ><span class="grpCount">2 fitur</span
+                    ><span class="grpNote">novelty penelitian</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Luas RTH</span
+                    ><span class="track sp live"
+                      ><span class="fill" style="width: 58%"></span
+                      ><span class="thumb" style="left: 58%"></span></span
+                    ><span class="val">1,640 km²</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Kepadatan</span
+                    ><span class="track sp live"
+                      ><span class="fill" style="width: 40%"></span
+                      ><span class="thumb" style="left: 40%"></span></span
+                    ><span class="val">10.500 j/km²</span>
+                  </div>
+                </div>
+                <div class="grp">
+                  <div class="grpHead">
+                    <span class="grpDot" style="background: #b0b0b0"></span
+                    ><span class="grpName">Meteorologi</span
+                    ><span class="grpCount">7 fitur</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Suhu</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 62%"></span
+                      ><span class="thumb" style="left: 62%"></span></span
+                    ><span class="val">28,4 °C</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Kelembapan</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 76%"></span
+                      ><span class="thumb" style="left: 76%"></span></span
+                    ><span class="val">76 %</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Curah hujan</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 18%"></span
+                      ><span class="thumb" style="left: 18%"></span></span
+                    ><span class="val">4,6 mm</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Tutupan awan</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 68%"></span
+                      ><span class="thumb" style="left: 68%"></span></span
+                    ><span class="val">68 %</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Kec. angin</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 37%"></span
+                      ><span class="thumb" style="left: 37%"></span></span
+                    ><span class="val">9,2 km/j</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Tekanan</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 54%"></span
+                      ><span class="thumb" style="left: 54%"></span></span
+                    ><span class="val">1.009 hPa</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">Arah angin</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 41%"></span
+                      ><span class="thumb" style="left: 41%"></span></span
+                    ><span class="val">148°</span>
+                  </div>
+                </div>
+                <div class="grp">
+                  <div class="grpHead">
+                    <span class="grpDot" style="background: #b0b0b0"></span
+                    ><span class="grpName">Polutan Udara</span
+                    ><span class="grpCount">6 fitur</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">PM2.5</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 45%"></span
+                      ><span class="thumb" style="left: 45%"></span></span
+                    ><span class="val">68 ISPU</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">PM10</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 49%"></span
+                      ><span class="thumb" style="left: 49%"></span></span
+                    ><span class="val">74 ISPU</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">SO₂</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 26%"></span
+                      ><span class="thumb" style="left: 26%"></span></span
+                    ><span class="val">21 ISPU</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">CO</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 31%"></span
+                      ><span class="thumb" style="left: 31%"></span></span
+                    ><span class="val">18 ISPU</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">O₃</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 38%"></span
+                      ><span class="thumb" style="left: 38%"></span></span
+                    ><span class="val">34 ISPU</span>
+                  </div>
+                  <div class="sliderRow">
+                    <span class="name">NO₂</span
+                    ><span class="track live"
+                      ><span class="fill" style="width: 22%"></span
+                      ><span class="thumb" style="left: 22%"></span></span
+                    ><span class="val">12 ISPU</span>
+                  </div>
+                </div>
+                <div class="derived">
+                  <b>Dihitung otomatis dari data historis — 6 fitur</b
+                  ><br />PM2.5 hari ke-1, ke-2, dan ke-3 sebelumnya · rata-rata
+                  bergerak 3 hari · bulan · hari dalam minggu
+                </div>
+                <div class="note" style="text-align: right; margin-top: 11px">
+                  Total <b>21 fitur masukan</b>
+                </div>
+              </div>
+              <div>
+                <div class="card">
+                  <div class="cardTitle">
+                    Hasil Simulasi <em>9 November 2025</em>
+                  </div>
+                  <div class="big">
+                    <span class="n" style="color: var(--sedang)">70</span
+                    ><span class="u">ISPU</span>
+                  </div>
+                  <span class="chip c-sedang">Sedang</span>
+                  <div class="meta">
+                    Turun 2 poin dari mode aktual (72), setelah luas RTH
+                    dinaikkan menjadi 1,640 km² dan kepadatan diturunkan menjadi
+                    10.500 jiwa/km².
+                  </div>
+                  <svg
+                    viewBox="0 0 300 100"
+                    style="
+                      width: 100%;
+                      height: auto;
+                      display: block;
+                      margin-top: 12px;
+                    "
+                  >
+                    <line
+                      x1="14"
+                      y1="29.3"
+                      x2="292"
+                      y2="29.3"
+                      stroke="#D8C48A"
+                      stroke-width="1"
+                      stroke-dasharray="4 4"
+                    />
+                    <text
+                      x="292"
+                      y="25.3"
+                      font-size="8"
+                      fill="#9A7A18"
+                      text-anchor="end"
+                      font-family="Inter,Arial"
+                    >
+                      ISPU 100
+                    </text>
+                    <line
+                      x1="14"
+                      y1="75.7"
+                      x2="292"
+                      y2="75.7"
+                      stroke="#B9CFC0"
+                      stroke-width="1"
+                      stroke-dasharray="4 4"
+                    />
+                    <text
+                      x="292"
+                      y="71.7"
+                      font-size="8"
+                      fill="#3F7A57"
+                      text-anchor="end"
+                      font-family="Inter,Arial"
+                    >
+                      ISPU 50
+                    </text>
+                    <polyline
+                      points="20,57.1 63,50.6 107,44.1 150,36.7 193,29.3 236,33.9 280,42.3"
+                      fill="none"
+                      stroke="#1C1C1C"
+                      stroke-width="2.2"
+                    />
+                    <circle cx="20" cy="57.1" r="3" fill="#1C1C1C" />
+                    <circle cx="63" cy="50.6" r="3" fill="#1C1C1C" />
+                    <circle cx="107" cy="44.1" r="3" fill="#1C1C1C" />
+                    <circle cx="150" cy="36.7" r="3" fill="#1C1C1C" />
+                    <circle cx="193" cy="29.3" r="3" fill="#1C1C1C" />
+                    <circle cx="236" cy="33.9" r="3" fill="#1C1C1C" />
+                    <circle cx="280" cy="42.3" r="3" fill="#1C1C1C" />
+                    <text
+                      x="20"
+                      y="98"
+                      font-size="8"
+                      fill="#9EB0BA"
+                      text-anchor="middle"
+                      font-family="Inter,Arial"
+                    >
+                      t+1
+                    </text>
+                    <text
+                      x="280"
+                      y="98"
+                      font-size="8"
+                      fill="#9EB0BA"
+                      text-anchor="middle"
+                      font-family="Inter,Arial"
+                    >
+                      t+7
+                    </text>
+                  </svg>
+                  <div class="note">
+                    Perbandingan terhadap mode aktual: t+1 72 → 70 · t+4 94 → 92
+                    · t+7 88 → 86
+                  </div>
+                </div>
+                <div class="card" style="margin-top: 16px">
+                  <div class="cardTitle">
+                    Perbandingan Mode <em>aktual vs simulasi</em>
+                  </div>
+                  <table>
+                    <tr>
+                      <th>Horizon</th>
+                      <th class="num">Aktual</th>
+                      <th class="num">Simulasi</th>
+                      <th class="num">Selisih</th>
+                    </tr>
+                    <tr>
+                      <td>t+1</td>
+                      <td class="num">72</td>
+                      <td class="num">70</td>
+                      <td class="num">&#8722;2</td>
+                    </tr>
+                    <tr>
+                      <td>t+2</td>
+                      <td class="num">79</td>
+                      <td class="num">77</td>
+                      <td class="num">&#8722;2</td>
+                    </tr>
+                    <tr>
+                      <td>t+3</td>
+                      <td class="num">86</td>
+                      <td class="num">84</td>
+                      <td class="num">&#8722;2</td>
+                    </tr>
+                    <tr>
+                      <td>t+4</td>
+                      <td class="num">94</td>
+                      <td class="num">92</td>
+                      <td class="num">&#8722;2</td>
+                    </tr>
+                    <tr>
+                      <td>t+5</td>
+                      <td class="num">103</td>
+                      <td class="num">100</td>
+                      <td class="num">&#8722;3</td>
+                    </tr>
+                    <tr>
+                      <td>t+6</td>
+                      <td class="num">97</td>
+                      <td class="num">95</td>
+                      <td class="num">&#8722;2</td>
+                    </tr>
+                    <tr>
+                      <td>t+7</td>
+                      <td class="num">88</td>
+                      <td class="num">86</td>
+                      <td class="num">&#8722;2</td>
+                    </tr>
+                  </table>
+                  <div class="note">
+                    Perubahan luas RTH dan kepadatan penduduk hanya sedikit
+                    menggeser hasil prediksi, sesuai dengan kontribusi variabel
+                    spasial yang terbatas pada model.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="h7">
+              <div class="hbox">
+                <div class="d">t+1</div>
+                <div class="dt">9 Nov</div>
+                <div class="n" style="color: var(--sedang)">70</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+              <div class="hbox">
+                <div class="d">t+2</div>
+                <div class="dt">10 Nov</div>
+                <div class="n" style="color: var(--sedang)">77</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+              <div class="hbox">
+                <div class="d">t+3</div>
+                <div class="dt">11 Nov</div>
+                <div class="n" style="color: var(--sedang)">84</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+              <div class="hbox">
+                <div class="d">t+4</div>
+                <div class="dt">12 Nov</div>
+                <div class="n" style="color: var(--sedang)">92</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+              <div class="hbox">
+                <div class="d">t+5</div>
+                <div class="dt">13 Nov</div>
+                <div class="n" style="color: var(--sedang)">100</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+              <div class="hbox">
+                <div class="d">t+6</div>
+                <div class="dt">14 Nov</div>
+                <div class="n" style="color: var(--sedang)">95</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+              <div class="hbox">
+                <div class="d">t+7</div>
+                <div class="dt">15 Nov</div>
+                <div class="n" style="color: var(--sedang)">86</div>
+                <div
+                  class="k"
+                  style="background: var(--sedang-bg); color: var(--sedang)"
+                >
+                  Sedang
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="caption">
+          <b>Interaksi:</b> susunan halaman sama dengan mode aktual, tetapi
+          seluruh <i>slider</i> terbuka. Kelompok variabel spasial diberi
+          penanda tersendiri karena merupakan variabel yang diteliti. Fitur
+          turunan tetap dihitung otomatis dan tidak dapat diubah pengguna.
+        </div>
+      </div>
+
+      <!-- ==================================================================== -->
+      <!-- FRAME 3 — EVALUATION PREDIKSI                                               -->
+      <!-- ==================================================================== -->
+      <div>
+        <div class="frameLabel">Gambar L10.3 — Modul Evaluation (Prediksi)</div>
+        <div class="frame">
+          <div class="side">
+            <div class="brand">
+              <div class="brandMark"></div>
+              <div class="brandText">
+                Prediksi PM2.5<span>DKI Jakarta</span>
+              </div>
+            </div>
+            <div class="nav">
+              <div class="item">Dashboard</div>
+              <div class="item active">Evaluation</div>
+              <div class="item">Information</div>
+            </div>
+            <div class="sideFoot">
+              Periode uji<br /><b>28 Jul – 1 Nov 2025</b><br /><br />
+              485 baris data uji<br />5 stasiun
+            </div>
+          </div>
+
+          <div class="main">
+            <h2 class="title">Evaluasi Model</h2>
+            <div class="subt">
+              Perbandingan nilai prediksi dan nilai aktual pada data historis
+            </div>
+
+            <div class="lbl">Pilih Stasiun</div>
+            <div class="pills">
+              <span class="pill active">DKI1 Bundaran HI</span>
+              <span class="pill">DKI2 Kelapa Gading</span>
+              <span class="pill">DKI3 Jagakarsa</span>
+              <span class="pill">DKI4 Lubang Buaya</span>
+              <span class="pill">DKI5 Kebon Jeruk</span>
+            </div>
+
+            <div class="lbl">Tanggal Acuan</div>
+            <div class="stepper">
+              <span class="stepBtn">&lsaquo;</span>
+              <span class="dateBox">15 Oktober 2025</span>
+              <span class="stepBtn">&rsaquo;</span>
+              <span class="stepHint"
+                >PM2.5 aktual hari acuan: <b>81 ISPU</b> · Sedang</span
+              >
+            </div>
+
+            <div class="card" style="margin-bottom: 16px">
+              <div class="cardTitle">Prediksi vs Aktual — 7 Horizon</div>
+              <table>
+                <tr>
+                  <th>Horizon</th>
+                  <th>Tanggal</th>
+                  <th class="num">Prediksi</th>
+                  <th class="num">Aktual</th>
+                  <th class="num">Selisih</th>
+                  <th class="num">Kesalahan</th>
+                  <th>Kategori Aktual</th>
+                </tr>
+                <tr>
+                  <td>t+1</td>
+                  <td>16 Okt 2025</td>
+                  <td class="num">78</td>
+                  <td class="num">84</td>
+                  <td class="num">−6</td>
+                  <td class="num">7,1 %</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: var(--sedang-bg); color: var(--sedang)"
+                      >Sedang</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>t+2</td>
+                  <td>17 Okt 2025</td>
+                  <td class="num">76</td>
+                  <td class="num">71</td>
+                  <td class="num">+5</td>
+                  <td class="num">7,0 %</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: var(--sedang-bg); color: var(--sedang)"
+                      >Sedang</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>t+3</td>
+                  <td>18 Okt 2025</td>
+                  <td class="num">80</td>
+                  <td class="num">92</td>
+                  <td class="num">−12</td>
+                  <td class="num">13,0 %</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: var(--sedang-bg); color: var(--sedang)"
+                      >Sedang</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>t+4</td>
+                  <td>19 Okt 2025</td>
+                  <td class="num">83</td>
+                  <td class="num">97</td>
+                  <td class="num">−14</td>
+                  <td class="num">14,4 %</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: var(--sedang-bg); color: var(--sedang)"
+                      >Sedang</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>t+5</td>
+                  <td>20 Okt 2025</td>
+                  <td class="num">85</td>
+                  <td class="num">74</td>
+                  <td class="num">+11</td>
+                  <td class="num">14,9 %</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: var(--sedang-bg); color: var(--sedang)"
+                      >Sedang</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>t+6</td>
+                  <td>21 Okt 2025</td>
+                  <td class="num">82</td>
+                  <td class="num">69</td>
+                  <td class="num">+13</td>
+                  <td class="num">18,8 %</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: var(--sedang-bg); color: var(--sedang)"
+                      >Sedang</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>t+7</td>
+                  <td>22 Okt 2025</td>
+                  <td class="num">79</td>
+                  <td class="num">88</td>
+                  <td class="num">−9</td>
+                  <td class="num">10,2 %</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: var(--sedang-bg); color: var(--sedang)"
+                      >Sedang</span
+                    >
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="lbl">Grafik PM2.5 di Sekitar Tanggal Acuan</div>
+            <div
+              class="card"
+              style="margin-bottom: 16px; padding: 14px 12px 10px"
+            >
+              <svg
+                viewBox="0 0 700 180"
+                style="width: 100%; height: auto; display: block"
+              >
+                <!-- garis bantu -->
+                <line
+                  x1="40"
+                  y1="20"
+                  x2="680"
+                  y2="20"
+                  stroke="#EDF2F4"
+                  stroke-width="1"
+                />
+                <line
+                  x1="40"
+                  y1="63"
+                  x2="680"
+                  y2="63"
+                  stroke="#EDF2F4"
+                  stroke-width="1"
+                />
+                <line
+                  x1="40"
+                  y1="106"
+                  x2="680"
+                  y2="106"
+                  stroke="#EDF2F4"
+                  stroke-width="1"
+                />
+                <line
+                  x1="40"
+                  y1="150"
+                  x2="680"
+                  y2="150"
+                  stroke="#E3EAEE"
+                  stroke-width="1"
+                />
+                <text
+                  x="34"
+                  y="24"
+                  font-size="9"
+                  fill="#9EB0BA"
+                  text-anchor="end"
+                  font-family="Inter,Arial"
+                >
+                  105
+                </text>
+                <text
+                  x="34"
+                  y="67"
+                  font-size="9"
+                  fill="#9EB0BA"
+                  text-anchor="end"
+                  font-family="Inter,Arial"
+                >
+                  90
+                </text>
+                <text
+                  x="34"
+                  y="110"
+                  font-size="9"
+                  fill="#9EB0BA"
+                  text-anchor="end"
+                  font-family="Inter,Arial"
+                >
+                  75
+                </text>
+                <text
+                  x="34"
+                  y="154"
+                  font-size="9"
+                  fill="#9EB0BA"
+                  text-anchor="end"
+                  font-family="Inter,Arial"
+                >
+                  60
+                </text>
+
+                <!-- penanda tanggal acuan -->
+                <line
+                  x1="178"
+                  y1="16"
+                  x2="178"
+                  y2="152"
+                  stroke="#B7C6CE"
+                  stroke-width="1"
+                  stroke-dasharray="4 4"
+                />
+                <text
+                  x="182"
+                  y="26"
+                  font-size="9"
+                  fill="#8DA0AC"
+                  font-family="Inter,Arial"
+                >
+                  tanggal acuan
+                </text>
+
+                <!-- nilai aktual -->
+                <polyline
+                  points="40,104 109,69 178,89 247,81 316,118 384,58 453,43 522,110 591,124 660,69"
+                  fill="none"
+                  stroke="#1C1C1C"
+                  stroke-width="2"
+                />
+                <!-- nilai prediksi -->
+                <polyline
+                  points="247,98 316,104 384,92 453,84 522,78 591,86 660,95"
+                  fill="none"
+                  stroke="#8C8C8C"
+                  stroke-width="2"
+                  stroke-dasharray="6 4"
+                />
+                <circle
+                  cx="247"
+                  cy="98"
+                  r="3.2"
+                  fill="#FFFFFF"
+                  stroke="#8C8C8C"
+                  stroke-width="1.6"
+                />
+                <circle
+                  cx="316"
+                  cy="104"
+                  r="3.2"
+                  fill="#FFFFFF"
+                  stroke="#8C8C8C"
+                  stroke-width="1.6"
+                />
+                <circle
+                  cx="384"
+                  cy="92"
+                  r="3.2"
+                  fill="#FFFFFF"
+                  stroke="#8C8C8C"
+                  stroke-width="1.6"
+                />
+                <circle
+                  cx="453"
+                  cy="84"
+                  r="3.2"
+                  fill="#FFFFFF"
+                  stroke="#8C8C8C"
+                  stroke-width="1.6"
+                />
+                <circle
+                  cx="522"
+                  cy="78"
+                  r="3.2"
+                  fill="#FFFFFF"
+                  stroke="#8C8C8C"
+                  stroke-width="1.6"
+                />
+                <circle
+                  cx="591"
+                  cy="86"
+                  r="3.2"
+                  fill="#FFFFFF"
+                  stroke="#8C8C8C"
+                  stroke-width="1.6"
+                />
+                <circle
+                  cx="660"
+                  cy="95"
+                  r="3.2"
+                  fill="#FFFFFF"
+                  stroke="#8C8C8C"
+                  stroke-width="1.6"
+                />
+
+                <text
+                  x="40"
+                  y="170"
+                  font-size="9"
+                  fill="#9EB0BA"
+                  text-anchor="middle"
+                  font-family="Inter,Arial"
+                >
+                  13 Okt
+                </text>
+                <text
+                  x="178"
+                  y="170"
+                  font-size="9"
+                  fill="#9EB0BA"
+                  text-anchor="middle"
+                  font-family="Inter,Arial"
+                >
+                  15 Okt
+                </text>
+                <text
+                  x="316"
+                  y="170"
+                  font-size="9"
+                  fill="#9EB0BA"
+                  text-anchor="middle"
+                  font-family="Inter,Arial"
+                >
+                  17 Okt
+                </text>
+                <text
+                  x="453"
+                  y="170"
+                  font-size="9"
+                  fill="#9EB0BA"
+                  text-anchor="middle"
+                  font-family="Inter,Arial"
+                >
+                  19 Okt
+                </text>
+                <text
+                  x="591"
+                  y="170"
+                  font-size="9"
+                  fill="#9EB0BA"
+                  text-anchor="middle"
+                  font-family="Inter,Arial"
+                >
+                  21 Okt
+                </text>
+              </svg>
+              <div class="legend">
+                <span><i style="background: #1c1c1c"></i>Nilai aktual</span>
+                <span
+                  ><i style="background: #8c8c8c"></i>Nilai prediksi (t+1 …
+                  t+7)</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="caption">
+          <b>Interaksi:</b> pengguna memilih stasiun dan menggeser tanggal acuan
+          pada periode uji. Sistem menampilkan perbandingan prediksi dan aktual
+          untuk ketujuh horizon serta grafik PM2.5 di sekitar tanggal acuan.
+        </div>
+      </div>
+
+      <!-- ==================================================================== -->
+      <!-- FRAME 4 — EVALUATION METRIK                                                 -->
+      <!-- ==================================================================== -->
+      <div>
+        <div class="frameLabel">
+          Gambar L10.4 — Modul Evaluation (Metrik dan Variabel)
+        </div>
+        <div class="frame">
+          <div class="side">
+            <div class="brand">
+              <div class="brandMark"></div>
+              <div class="brandText">
+                Prediksi PM2.5<span>DKI Jakarta</span>
+              </div>
+            </div>
+            <div class="nav">
+              <div class="item">Dashboard</div>
+              <div class="item active">Evaluation</div>
+              <div class="item">Information</div>
+            </div>
+            <div class="sideFoot">
+              Periode uji<br /><b>28 Jul – 1 Nov 2025</b><br /><br />
+              485 baris data uji<br />5 stasiun
+            </div>
+          </div>
+
+          <div class="main">
+            <h2 class="title">Evaluasi Model</h2>
+            <div class="subt">
+              Kinerja model pada seluruh data uji dan kontribusi variabel
+              masukan
+            </div>
+
+            <div class="lbl">Metrik Evaluasi Seluruh Data Uji</div>
+            <div class="card">
+              <table>
+                <tr>
+                  <th>Horizon</th>
+                  <th class="num">MAE</th>
+                  <th class="num">RMSE</th>
+                  <th class="num">MAPE</th>
+                  <th class="num">R²</th>
+                  <th class="num">RMSE Persistensi</th>
+                </tr>
+                <tr>
+                  <td>t+1</td>
+                  <td class="num">9,8</td>
+                  <td class="num">12,5</td>
+                  <td class="num">12,6 %</td>
+                  <td class="num">0,283</td>
+                  <td class="num">15,1</td>
+                </tr>
+                <tr>
+                  <td>t+2</td>
+                  <td class="num">11,4</td>
+                  <td class="num">14,3</td>
+                  <td class="num">14,6 %</td>
+                  <td class="num">0,058</td>
+                  <td class="num">16,6</td>
+                </tr>
+                <tr>
+                  <td>t+3</td>
+                  <td class="num">11,2</td>
+                  <td class="num">14,2</td>
+                  <td class="num">14,7 %</td>
+                  <td class="num">0,075</td>
+                  <td class="num">17,7</td>
+                </tr>
+                <tr>
+                  <td>t+4</td>
+                  <td class="num">11,5</td>
+                  <td class="num">14,5</td>
+                  <td class="num">15,0 %</td>
+                  <td class="num">0,042</td>
+                  <td class="num">18,7</td>
+                </tr>
+                <tr>
+                  <td>t+5</td>
+                  <td class="num">11,7</td>
+                  <td class="num">14,8</td>
+                  <td class="num">15,5 %</td>
+                  <td class="num">0,078</td>
+                  <td class="num">18,4</td>
+                </tr>
+                <tr>
+                  <td>t+6</td>
+                  <td class="num">11,7</td>
+                  <td class="num">14,7</td>
+                  <td class="num">15,8 %</td>
+                  <td class="num">0,128</td>
+                  <td class="num">19,2</td>
+                </tr>
+                <tr>
+                  <td>t+7</td>
+                  <td class="num">11,5</td>
+                  <td class="num">14,4</td>
+                  <td class="num">16,3 %</td>
+                  <td class="num">0,212</td>
+                  <td class="num">18,6</td>
+                </tr>
+              </table>
+              <div class="note">
+                Nilai RMSE model lebih kecil daripada
+                <i>baseline</i> persistensi pada seluruh horizon.
+              </div>
+            </div>
+
+            <div class="lbl" style="margin-top: 20px">
+              Perbandingan Metode Optimasi (RMSE Data Uji)
+            </div>
+            <div class="card">
+              <table>
+                <tr>
+                  <th>Horizon</th>
+                  <th class="num">Hyperparameter Bawaan</th>
+                  <th class="num">Random Search</th>
+                  <th class="num">PSO</th>
+                </tr>
+                <tr>
+                  <td>t+1</td>
+                  <td class="num">13,486</td>
+                  <td class="num">12,796</td>
+                  <td class="num best">12,522</td>
+                </tr>
+                <tr>
+                  <td>t+2</td>
+                  <td class="num">15,725</td>
+                  <td class="num">14,460</td>
+                  <td class="num best">14,318</td>
+                </tr>
+                <tr>
+                  <td>t+3</td>
+                  <td class="num">16,374</td>
+                  <td class="num">14,311</td>
+                  <td class="num best">14,190</td>
+                </tr>
+                <tr>
+                  <td>t+4</td>
+                  <td class="num">15,923</td>
+                  <td class="num">14,942</td>
+                  <td class="num best">14,505</td>
+                </tr>
+                <tr>
+                  <td>t+5</td>
+                  <td class="num">14,996</td>
+                  <td class="num">15,340</td>
+                  <td class="num best">14,811</td>
+                </tr>
+                <tr>
+                  <td>t+6</td>
+                  <td class="num">15,431</td>
+                  <td class="num">15,328</td>
+                  <td class="num best">14,692</td>
+                </tr>
+                <tr>
+                  <td>t+7</td>
+                  <td class="num">15,187</td>
+                  <td class="num">15,352</td>
+                  <td class="num best">14,430</td>
+                </tr>
+              </table>
+              <div class="note">
+                Random Search dan PSO menggunakan ruang pencarian dan jumlah
+                evaluasi yang sama, yaitu 820 evaluasi. Nilai tebal menunjukkan
+                RMSE terkecil pada setiap horizon.
+              </div>
+            </div>
+
+            <div class="lbl" style="margin-top: 20px">
+              Kontribusi Variabel (10 Teratas, Horizon t+1)
+            </div>
+            <div class="card">
+              <table>
+                <tr>
+                  <th class="num">#</th>
+                  <th>Variabel</th>
+                  <th>Kelompok</th>
+                  <th>Kontribusi</th>
+                  <th class="num">Nilai</th>
+                </tr>
+                <tr>
+                  <td class="num">1</td>
+                  <td>PM2.5 hari ini</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #edf1f3; color: var(--sub)"
+                      >Polutan</span
+                    >
+                  </td>
+                  <td class="impcell">
+                    <div class="impbar" style="width: 100%"></div>
+                  </td>
+                  <td class="num">0,186</td>
+                </tr>
+                <tr>
+                  <td class="num">2</td>
+                  <td>PM2.5 hari sebelumnya (lag1)</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #edf1f3; color: var(--sub)"
+                      >Turunan</span
+                    >
+                  </td>
+                  <td class="impcell">
+                    <div class="impbar" style="width: 60%"></div>
+                  </td>
+                  <td class="num">0,112</td>
+                </tr>
+                <tr>
+                  <td class="num">3</td>
+                  <td>PM10</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #edf1f3; color: var(--sub)"
+                      >Polutan</span
+                    >
+                  </td>
+                  <td class="impcell">
+                    <div class="impbar" style="width: 51%"></div>
+                  </td>
+                  <td class="num">0,094</td>
+                </tr>
+                <tr>
+                  <td class="num">4</td>
+                  <td>Rata-rata bergerak 3 hari</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #edf1f3; color: var(--sub)"
+                      >Turunan</span
+                    >
+                  </td>
+                  <td class="impcell">
+                    <div class="impbar" style="width: 44%"></div>
+                  </td>
+                  <td class="num">0,081</td>
+                </tr>
+                <tr>
+                  <td class="num">5</td>
+                  <td>Bulan</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #edf1f3; color: var(--sub)"
+                      >Turunan</span
+                    >
+                  </td>
+                  <td class="impcell">
+                    <div class="impbar" style="width: 37%"></div>
+                  </td>
+                  <td class="num">0,068</td>
+                </tr>
+                <tr class="spRow">
+                  <td class="num">6</td>
+                  <td>Luas RTH</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #e4e4e4; color: #1c1c1c"
+                      >Spasial</span
+                    >
+                  </td>
+                  <td class="impcell">
+                    <div class="impbar sp" style="width: 33%"></div>
+                  </td>
+                  <td class="num">0,061</td>
+                </tr>
+                <tr>
+                  <td class="num">7</td>
+                  <td>Kecepatan angin</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #edf1f3; color: var(--sub)"
+                      >Meteorologi</span
+                    >
+                  </td>
+                  <td class="impcell">
+                    <div class="impbar" style="width: 29%"></div>
+                  </td>
+                  <td class="num">0,054</td>
+                </tr>
+                <tr>
+                  <td class="num">8</td>
+                  <td>Kelembapan</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #edf1f3; color: var(--sub)"
+                      >Meteorologi</span
+                    >
+                  </td>
+                  <td class="impcell">
+                    <div class="impbar" style="width: 25%"></div>
+                  </td>
+                  <td class="num">0,047</td>
+                </tr>
+                <tr>
+                  <td class="num">9</td>
+                  <td>PM2.5 lag 2 hari</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #edf1f3; color: var(--sub)"
+                      >Turunan</span
+                    >
+                  </td>
+                  <td class="impcell">
+                    <div class="impbar" style="width: 23%"></div>
+                  </td>
+                  <td class="num">0,042</td>
+                </tr>
+                <tr>
+                  <td class="num">10</td>
+                  <td>Curah hujan</td>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #edf1f3; color: var(--sub)"
+                      >Meteorologi</span
+                    >
+                  </td>
+                  <td class="impcell">
+                    <div class="impbar" style="width: 20%"></div>
+                  </td>
+                  <td class="num">0,038</td>
+                </tr>
+              </table>
+              <div class="note">
+                Luas RTH menempati peringkat <b>6</b>, sedangkan kepadatan
+                penduduk menempati peringkat <b>21</b> dari 21 fitur masukan.
+                Pengaruh kedua variabel spasial diuji lebih lanjut melalui
+                perbandingan tiga skenario.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="caption">
+          <b>Interaksi:</b> bagian lanjutan modul Evaluation yang menampilkan
+          metrik evaluasi seluruh data uji, perbandingan metode optimasi, serta
+          kontribusi variabel. Bagian ini tidak bergantung pada stasiun maupun
+          tanggal acuan yang dipilih.
+        </div>
+      </div>
+
+      <!-- ==================================================================== -->
+      <!-- FRAME 5 — INFORMATION                                                -->
+      <!-- ==================================================================== -->
+      <div>
+        <div class="frameLabel">Gambar L10.5 — Modul Information</div>
+        <div class="frame">
+          <div class="side">
+            <div class="brand">
+              <div class="brandMark"></div>
+              <div class="brandText">
+                Prediksi PM2.5<span>DKI Jakarta</span>
+              </div>
+            </div>
+            <div class="nav">
+              <div class="item">Dashboard</div>
+              <div class="item">Evaluation</div>
+              <div class="item active">Information</div>
+            </div>
+            <div class="sideFoot">
+              Sumber data<br />Satu Data Jakarta<br />BPS DKI Jakarta<br />Open-Meteo
+            </div>
+          </div>
+
+          <div class="main">
+            <h2 class="title">Informasi Sistem</h2>
+            <div class="subt">
+              Penjelasan model, variabel, dan panduan penggunaan aplikasi
+            </div>
+
+            <div class="section">
+              <h3>Tentang Aplikasi</h3>
+              <p>
+                Aplikasi menampilkan prediksi indeks ISPU PM2.5 satu sampai
+                tujuh hari ke depan pada lima stasiun pemantauan kualitas udara
+                DKI Jakarta. Prediksi dihasilkan oleh model XGBoost yang
+                <i>hyperparameter</i>-nya dioptimasi menggunakan Particle Swarm
+                Optimization, lalu dibandingkan dengan
+                <i>hyperparameter</i> bawaan dan <i>hyperparameter</i> hasil
+                Random Search.
+              </p>
+            </div>
+
+            <div class="section">
+              <h3>Cara Kerja Sistem</h3>
+              <p>
+                Model dilatih terlebih dahulu di luar aplikasi menggunakan data
+                24 Januari 2024 sampai 8 November 2025. Hasil pelatihan disimpan
+                sebagai tujuh berkas model, satu untuk setiap horizon. Aplikasi
+                hanya memuat berkas tersebut dan melakukan inferensi, sehingga
+                tidak ada proses pelatihan ulang saat aplikasi digunakan.
+              </p>
+            </div>
+
+            <div class="section">
+              <h3>Spesifikasi Model</h3>
+              <div class="kv">
+                <span>Algoritma</span><span><b>XGBoost</b> (regresi)</span>
+                <span>Optimasi</span
+                ><span><b>PSO</b> — 20 partikel, 40 iterasi</span>
+                <span>Pembanding</span
+                ><span
+                  ><i>Hyperparameter</i> bawaan dan <b>Random Search</b> (820
+                  evaluasi)</span
+                >
+                <span>Jumlah fitur masukan</span><span><b>21 fitur</b></span>
+                <span>Horizon prediksi</span><span><b>t+1 sampai t+7</b></span>
+                <span>Pembagian data</span
+                ><span>Kronologis <b>70 : 15 : 15</b></span>
+                <span>Satuan keluaran</span
+                ><span>Indeks <b>ISPU</b> (PermenLHK 14/2020)</span>
+              </div>
+            </div>
+
+            <div class="section">
+              <h3>Rincian 21 Fitur Masukan</h3>
+              <table>
+                <tr>
+                  <th>Kelompok</th>
+                  <th class="num">Jumlah</th>
+                  <th>Variabel</th>
+                </tr>
+                <tr>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #e4e4e4; color: #1c1c1c"
+                      >Spasial</span
+                    >
+                  </td>
+                  <td class="num">2</td>
+                  <td>Luas RTH kecamatan, kepadatan penduduk kecamatan</td>
+                </tr>
+                <tr>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #f0f0f0; color: var(--sub)"
+                      >Meteorologi</span
+                    >
+                  </td>
+                  <td class="num">7</td>
+                  <td>
+                    Suhu, kelembapan, curah hujan, tutupan awan, kecepatan
+                    angin, tekanan, arah angin
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #f0f0f0; color: var(--sub)"
+                      >Polutan</span
+                    >
+                  </td>
+                  <td class="num">6</td>
+                  <td>PM2.5, PM10, SO&#8322;, CO, O&#8323;, NO&#8322;</td>
+                </tr>
+                <tr>
+                  <td>
+                    <span
+                      class="tag"
+                      style="background: #edf1f3; color: var(--sub)"
+                      >Turunan</span
+                    >
+                  </td>
+                  <td class="num">6</td>
+                  <td>
+                    PM2.5 <i>lag</i> 1–3 hari, rata-rata bergerak 3 hari, bulan,
+                    hari
+                  </td>
+                </tr>
+              </table>
+              <div class="note">
+                Variabel spasial hanya memiliki satu nilai untuk setiap stasiun
+                per tahun, sehingga berperan sebagai pembeda antarwilayah, bukan
+                sebagai penyebab fluktuasi harian.
+              </div>
+            </div>
+
+            <div class="section">
+              <h3>Penjelasan Variabel Spasial</h3>
+              <div class="two">
+                <div class="card">
+                  <div class="cardTitle">Luas RTH</div>
+                  <p>
+                    Total luas ruang terbuka hijau pada kecamatan tempat stasiun
+                    berada, bersumber dari Satu Data Jakarta. Nilainya berbeda
+                    antarstasiun dan diperbarui setiap tahun.
+                  </p>
+                </div>
+                <div class="card">
+                  <div class="cardTitle">Kepadatan Penduduk</div>
+                  <p>
+                    Jumlah penduduk per kilometer persegi pada kecamatan tempat
+                    stasiun berada, bersumber dari BPS. Sama seperti RTH,
+                    nilainya diperbarui setiap tahun.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h3>Kategori ISPU</h3>
+              <div class="legend" style="gap: 16px; font-size: 11px">
+                <span><i style="background: var(--baik)"></i>Baik 0–50</span>
+                <span
+                  ><i style="background: var(--sedang)"></i>Sedang 51–100</span
+                >
+                <span
+                  ><i style="background: var(--tdksehat)"></i>Tidak Sehat
+                  101–200</span
+                >
+                <span
+                  ><i style="background: var(--sgttdksehat)"></i>Sangat Tidak
+                  Sehat 201–300</span
+                >
+                <span
+                  ><i style="background: var(--berbahaya)"></i>Berbahaya &gt;
+                  300</span
+                >
+              </div>
+            </div>
+
+            <div class="section">
+              <h3>Panduan Penggunaan</h3>
+              <p>
+                Pilih stasiun pada halaman <i>Dashboard</i> untuk melihat
+                prediksi. Gunakan Mode Simulasi untuk mengamati pengaruh
+                perubahan variabel. Halaman <i>Evaluation</i> digunakan untuk
+                memeriksa ketepatan model pada data historis.
+              </p>
+            </div>
+
+            <div class="section" style="margin-bottom: 0">
+              <h3>Penyusun</h3>
+              <div class="kv">
+                <span>Nama</span><span><b>Fortuna</b> — 535230144</span>
+                <span>Program Studi</span
+                ><span>Teknik Informatika, Universitas Tarumanagara</span>
+                <span>Pembimbing</span><span>Pak Tony · Pak Manatap</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="caption">
+          <b>Interaksi:</b> halaman statis tanpa masukan pengguna, hanya
+          menampilkan penjelasan model, variabel, kategori ISPU, dan panduan
+          penggunaan.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

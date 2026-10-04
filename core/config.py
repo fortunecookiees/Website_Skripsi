@@ -1,6 +1,8 @@
 """Konstanta aplikasi: path file, stasiun, kelompok fitur, dan kategori ISPU."""
 from pathlib import Path
 
+import numpy as np
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT / "data" / "datasetskripsi.xlsx"
 MODEL_DIR = ROOT / "models"
@@ -57,18 +59,24 @@ LABEL_FITUR = {
 # Kategori ISPU (PermenLHK No. 14/2020)
 # ---------------------------------------------------------------------
 KATEGORI_ISPU = [
-    # (batas atas, nama, warna latar, warna teks)
-    (50,  "Baik",               "#2E7D32", "#FFFFFF"),
-    (100, "Sedang",             "#1565C0", "#FFFFFF"),
-    (200, "Tidak Sehat",        "#F9A825", "#000000"),
-    (300, "Sangat Tidak Sehat", "#C62828", "#FFFFFF"),
-    (float("inf"), "Berbahaya", "#000000", "#FFFFFF"),
+    # (batas atas, nama, rentang, warna utama, warna latar lembut, warna teks di atas latar lembut)
+    (50,  "Baik",               "1–50",    "#2E7D4F", "#E7F0EA", "#2E7D4F"),
+    (100, "Sedang",             "51–100",  "#2A5F9E", "#E6ECF3", "#2A5F9E"),
+    (200, "Tidak Sehat",        "101–200", "#B08300", "#F6EFDC", "#8A6A00"),
+    (300, "Sangat Tidak Sehat", "201–300", "#B23A32", "#F4E6E5", "#B23A32"),
+    (float("inf"), "Berbahaya", "≥301",    "#232323", "#E4E4E4", "#232323"),
 ]
 
 
+def bulatkan_ispu(nilai: float) -> int:
+    """Bulatkan ke integer, setengah ke atas (50,5 -> 51). ISPU selalu bilangan bulat."""
+    return int(np.floor(float(nilai) + 0.5))
+
+
 def kategori_ispu(nilai: float) -> dict:
-    """Kategori ISPU untuk sebuah nilai (dibulatkan dulu karena ISPU bilangan bulat)."""
-    v = round(float(nilai))
-    for batas, nama, warna, teks in KATEGORI_ISPU:
+    """Kategori ISPU dari nilai yang sudah dibulatkan, jadi tidak ada celah 50–51."""
+    v = bulatkan_ispu(nilai)
+    for batas, nama, rentang, warna, bg, teks in KATEGORI_ISPU:
         if v <= batas:
-            return {"kategori": nama, "warna": warna, "warna_teks": teks}
+            return {"nilai": v, "kategori": nama, "rentang": rentang,
+                    "warna": warna, "bg": bg, "warna_teks": teks}

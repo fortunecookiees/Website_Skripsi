@@ -1,0 +1,187 @@
+/* Diturunkan dari design/rancangan-ui.html (:root & class) */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+  --bg: #e8e8e6;
+  --surface: #ffffff;
+  --surface-2: #fafafa;
+  --line: #dedede;
+  --line-2: #efefef;
+  --ink: #1c1c1c;
+  --sub: #5b5b5b;
+  --muted: #8c8c8c;
+  --accent: #262626;
+  --accent-soft: #f0f0f0;
+  --accent-line: #c4c4c4;
+  --spatial: #1c1c1c;
+  --spatial-soft: #f4f4f2;
+  --spatial-line: #d2d2ce;
+  --baik: #2e7d4f;
+  --baik-bg: #e7f0ea;
+  --sedang: #2a5f9e;
+  --sedang-bg: #e6ecf3;
+  --tdksehat: #b08300;
+  --tdksehat-bg: #f6efdc;
+  --sgttdksehat: #b23a32;
+  --sgttdksehat-bg: #f4e6e5;
+  --berbahaya: #232323;
+}
+
+html, body, .stApp, .stApp p, .stApp div, .stApp span, .stApp td, .stApp th, .stApp button, .stApp input {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+}
+.stApp { color: var(--ink); }
+.block-container { padding-top: 2.2rem; padding-bottom: 2.5rem; max-width: 1180px; }
+
+/* ---------------- Sidebar ---------------- */
+section[data-testid="stSidebar"] {
+  background: var(--surface-2);
+  border-right: 1px solid var(--line);
+  width: 220px !important;
+  min-width: 220px !important;
+}
+section[data-testid="stSidebar"] > div { padding-top: 0.6rem; }
+.brand { display: flex; align-items: center; gap: 9px; margin: 0 0 22px; }
+.brandMark { width: 26px; height: 26px; border-radius: 2px; background: var(--ink); flex-shrink: 0; }
+.brandText { font-size: 12.5px; font-weight: 700; line-height: 1.25; color: var(--ink); }
+.brandText span { display: block; font-size: 10px; font-weight: 500; color: var(--muted); }
+
+.navActive {
+  font-size: 13px; padding: 9px 12px; border-radius: 3px; margin-bottom: 5px;
+  background: var(--ink); color: #fff; font-weight: 600; border: 1px solid var(--ink);
+}
+section[data-testid="stSidebar"] [data-testid="stPageLink"] { margin-bottom: 5px; }
+section[data-testid="stSidebar"] [data-testid="stPageLink"] a {
+  padding: 9px 12px; border-radius: 3px; border: 1px solid transparent; background: transparent;
+}
+section[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover { background: var(--accent-soft); }
+section[data-testid="stSidebar"] [data-testid="stPageLink"] a p,
+section[data-testid="stSidebar"] [data-testid="stPageLink"] a span { font-size: 13px; color: var(--sub); }
+.sideFoot {
+  margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);
+  font-size: 10.5px; color: var(--muted); line-height: 1.6;
+}
+.sideFoot b { color: var(--sub); }
+
+/* ---------------- Judul & label ---------------- */
+h2.title { font-size: 22px; font-weight: 700; margin: 0 0 3px; padding: 0; color: var(--ink); }
+.subt { font-size: 12.5px; color: var(--sub); margin-bottom: 18px; }
+.lbl {
+  font-size: 10.5px; letter-spacing: 0.11em; text-transform: uppercase;
+  color: var(--muted); font-weight: 700; margin: 0 0 4px;
+}
+
+/* ---------------- Pills stasiun & toggle mode ---------------- */
+[data-testid="stButtonGroup"] button {
+  border-radius: 3px !important; font-size: 12px; min-height: 32px;
+  border: 1px solid var(--line) !important; background: var(--surface-2); color: var(--sub);
+}
+[data-testid="stButtonGroup"] button p { font-size: 12px; }
+[data-testid="stButtonGroup"] button[aria-checked="true"],
+[data-testid="stButtonGroup"] button[aria-pressed="true"] {
+  background: var(--ink) !important; border-color: var(--ink) !important; color: #fff !important;
+}
+[data-testid="stButtonGroup"] button[aria-checked="true"] p,
+[data-testid="stButtonGroup"] button[aria-pressed="true"] p { color: #fff !important; font-weight: 600; }
+
+/* ---------------- Kartu (st.container dengan key card_*) ---------------- */
+[class*="st-key-card"] {
+  border: 1px solid var(--line); border-radius: 4px; background: var(--surface);
+  padding: 15px; gap: 0.35rem;
+}
+.cardTitle {
+  font-size: 11.5px; color: var(--sub); font-weight: 600; margin-bottom: 10px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.cardTitle em { font-style: normal; font-size: 10.5px; color: var(--muted); font-weight: 500; }
+
+/* ---------------- Kelompok variabel ---------------- */
+[class*="st-key-grp"] { gap: 0; }
+[class*="st-key-grp_"]:not(.st-key-grp_spasial) {
+  border-top: 1px solid var(--line-2); padding-top: 11px; margin-top: 6px;
+}
+.st-key-grp_spasial {
+  background: var(--spatial-soft); border: 1px solid var(--spatial-line);
+  border-left: 3px solid var(--ink); padding: 12px;
+}
+.grpHead { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+.grpDot { width: 8px; height: 8px; flex-shrink: 0; }
+.grpName { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--ink); }
+.grpCount {
+  font-size: 9.5px; color: var(--muted); background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 100px; padding: 1px 7px; font-weight: 600;
+}
+.st-key-grp_spasial .grpCount { background: #fff; border-color: var(--spatial-line); color: var(--spatial); }
+.grpNote { font-size: 10px; color: var(--muted); margin-left: auto; font-style: italic; }
+
+/* baris slider: nama | track | nilai */
+[class*="st-key-grp"] [data-testid="stHorizontalBlock"] { gap: 9px; align-items: center; min-height: 30px; }
+[class*="st-key-grp"] [data-testid="stHorizontalBlock"] [data-testid="stElementContainer"] { margin: 0; }
+.sName { font-size: 11px; color: var(--sub); line-height: 30px; white-space: nowrap; }
+.sVal { font-size: 10.5px; color: var(--ink); text-align: right; line-height: 30px;
+        font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sNa { font-size: 10.5px; color: var(--muted); font-style: italic; line-height: 30px; }
+[class*="st-key-grp"] [data-testid="stSlider"] { padding: 0 6px; }
+[class*="st-key-grp"] [data-testid="stSliderThumbValue"],
+[class*="st-key-grp"] [data-testid="stSliderTickBar"] { display: none; }
+[class*="st-key-grp"] [data-testid="stSlider"] [role="slider"] {
+  width: 13px; height: 13px; background: #fff; border: 2.5px solid var(--accent); box-shadow: none;
+}
+[class*="st-key-grp"] [data-testid="stSlider"] [role="slider"][aria-disabled="true"] { border-color: var(--accent-line); }
+.st-key-grp_spasial [data-testid="stSlider"] [role="slider"][aria-disabled="true"] { border-color: var(--spatial-line); }
+
+.derived {
+  background: var(--surface-2); border: 1px dashed var(--line); border-radius: 3px;
+  padding: 10px 12px; margin-top: 10px; font-size: 10.5px; color: var(--muted); line-height: 1.65;
+}
+.derived b { color: var(--sub); font-weight: 600; }
+.note { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+.note b { color: var(--sub); }
+
+/* ---------------- Angka besar & chip kategori ---------------- */
+.big { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 9px; }
+.big .n { font-size: 44px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.big .u { font-size: 11.5px; color: var(--muted); }
+.chip { display: inline-block; font-size: 11.5px; font-weight: 600; border-radius: 100px; padding: 5px 13px; }
+.meta { font-size: 11px; color: var(--muted); margin-top: 9px; line-height: 1.6; }
+.tag { display: inline-block; font-size: 10px; font-weight: 600; border-radius: 100px; padding: 2px 9px; }
+
+/* ---------------- Kotak 7 horizon ---------------- */
+.h7 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 6px; }
+.hbox { border: 1px solid var(--line); border-radius: 3px; padding: 10px 6px; text-align: center; background: var(--surface); }
+.hbox .d { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; }
+.hbox .dt { font-size: 9.5px; color: var(--muted); margin-bottom: 6px; }
+.hbox .n { font-size: 21px; font-weight: 700; line-height: 1.15; }
+.hbox .k { font-size: 9px; font-weight: 600; margin-top: 5px; border-radius: 100px; padding: 2px 0; }
+
+/* ---------------- Tabel ---------------- */
+table.tbl { width: 100%; border-collapse: collapse; font-size: 11.5px; border: none; }
+table.tbl th {
+  text-align: left; font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--muted); font-weight: 700; padding: 8px 9px; border: none; border-bottom: 1px solid var(--line);
+  background: transparent;
+}
+table.tbl td {
+  padding: 8px 9px; border: none; border-bottom: 1px solid var(--line-2);
+  font-variant-numeric: tabular-nums; color: var(--ink);
+}
+table.tbl td.num, table.tbl th.num { text-align: right; }
+table.tbl tr:last-child td { border-bottom: none; }
+table.tbl tr.sel td { font-weight: 600; }
+
+/* ---------------- Legend peta ---------------- */
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 10.5px; color: var(--sub); margin-top: 10px; }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
+.legend i.rth { border-radius: 50%; }
+
+/* ---------------- Banner ---------------- */
+.banner {
+  display: flex; gap: 9px; align-items: flex-start; font-size: 11.5px; background: var(--surface-2);
+  border: 1px solid var(--line); border-left: 3px solid var(--tdksehat); padding: 10px 12px;
+  margin-bottom: 16px; color: var(--sub); line-height: 1.55;
+}
+.banner .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tdksehat); margin-top: 5px; flex-shrink: 0; }
+
+@media (max-width: 760px) {
+  .h7 { grid-template-columns: repeat(4, 1fr); }
+}
