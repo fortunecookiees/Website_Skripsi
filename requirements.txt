@@ -1,0 +1,14 @@
+# Versi model harus sama dengan lingkungan training di Google Colab
+xgboost==3.3.0
+scikit-learn==1.6.1
+numpy==2.1.3
+
+# Data
+pandas==2.2.3   # samakan perilaku dengan Colab (pandas 2.x)
+openpyxl
+
+# Aplikasi
+streamlit
+plotly
+folium
+streamlit-folium
