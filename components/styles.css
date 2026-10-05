@@ -124,11 +124,6 @@ h2.title { font-size: 22px; font-weight: 700; margin: 0 0 3px; padding: 0; color
 [class*="st-key-grp"] [data-testid="stSlider"] { padding: 0 6px; }
 [class*="st-key-grp"] [data-testid="stSliderThumbValue"],
 [class*="st-key-grp"] [data-testid="stSliderTickBar"] { display: none; }
-[class*="st-key-grp"] [data-testid="stSlider"] [role="slider"] {
-  width: 13px; height: 13px; background: #fff; border: 2.5px solid var(--accent); box-shadow: none;
-}
-[class*="st-key-grp"] [data-testid="stSlider"] [role="slider"][aria-disabled="true"] { border-color: var(--accent-line); }
-.st-key-grp_spasial [data-testid="stSlider"] [role="slider"][aria-disabled="true"] { border-color: var(--spatial-line); }
 
 .derived {
   background: var(--surface-2); border: 1px dashed var(--line); border-radius: 3px;
@@ -185,3 +180,12 @@ table.tbl tr.sel td { font-weight: 600; }
 @media (max-width: 760px) {
   .h7 { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* ---------------- Tombol sekunder (reset simulasi) ---------------- */
+.st-key-reset_simulasi { margin-top: 10px; }
+.st-key-reset_simulasi button {
+  border: 1px solid var(--line); border-radius: 3px; background: var(--surface-2);
+  color: var(--sub); min-height: 32px; padding: 4px 12px;
+}
+.st-key-reset_simulasi button p { font-size: 12px; }
+.st-key-reset_simulasi button:hover { border-color: var(--accent-line); color: var(--ink); }

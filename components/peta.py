@@ -58,5 +58,5 @@ def _legend() -> None:
     item = [f'<span><i style="background:{warna}"></i>{nama} ({rentang})</span>'
             for _, nama, rentang, warna, _, _ in KATEGORI_ISPU[:4]]
     item.append(f'<span><i class="rth" style="background:{RTH_HIJAU};opacity:.3"></i>'
-                "Luas RTH kecamatan (luas lingkaran sebanding)</span>")
+                "Luas RTH kecamatan (ukuran relatif antarstasiun)</span>")
     st.html(f'<div class="legend">{"".join(item)}</div>')

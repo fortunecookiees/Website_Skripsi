@@ -25,6 +25,13 @@ TAMPILAN = {
     "no2": ("NO₂", "ISPU", 0, 1.0),
 }
 
+# nama dalam kalimat (huruf kecil kecuali singkatan)
+PANJANG = {
+    "luas_rth_km2": "luas RTH", "kepadatan_penduduk_jiwa_km2": "kepadatan penduduk", "suhu_c": "suhu",
+    "kelembapan_pct": "kelembapan", "curah_hujan_mm": "curah hujan", "tutupan_awan_pct": "tutupan awan",
+    "kecepatan_angin_kmh": "kecepatan angin", "tekanan_hpa": "tekanan udara", "arah_angin_deg": "arah angin",
+}
+
 # urutan tampilan mengikuti desain (urutan input model tetap FITUR di core/config.py)
 KELOMPOK = [
     ("spasial", "Variabel Spasial", ["luas_rth_km2", "kepadatan_penduduk_jiwa_km2"], "#1c1c1c", "novelty penelitian"),
@@ -49,12 +56,17 @@ def _baris_slider(fitur: str, nilai: float, rentang: pd.Series, terkunci: bool, 
         c_nilai.html('<div class="sVal">–</div>')
         return float("nan")
     lo, hi = float(rentang["min"]), float(rentang["max"])
-    nilai = min(max(float(nilai), lo), hi)
+    if kunci not in st.session_state:  # nilai awal = kondisi aktual; selanjutnya dikendalikan slider
+        st.session_state[kunci] = min(max(float(nilai), lo), hi)
     with c_slider:
-        v = st.slider(nama, min_value=lo, max_value=hi, value=nilai, step=langkah,
+        v = st.slider(nama, min_value=lo, max_value=hi, step=langkah,
                       disabled=terkunci, label_visibility="collapsed", key=kunci)
     c_nilai.html(f'<div class="sVal">{nilai_tampil(fitur, v)}</div>')
     return v
+
+
+def _kunci(prefix: str, fitur: str) -> str:
+    return f"{prefix}_{fitur}"
 
 
 def panel_variabel(baris: pd.Series, rentang: pd.DataFrame, terkunci: bool, prefix: str) -> dict:
@@ -66,8 +78,30 @@ def panel_variabel(baris: pd.Series, rentang: pd.DataFrame, terkunci: bool, pref
             st.html(f'<div class="grpHead"><span class="grpDot" style="background:{warna}"></span>'
                     f'<span class="grpName">{nama}</span><span class="grpCount">{len(fitur_list)} fitur</span>{note}</div>')
             for f in fitur_list:
-                hasil[f] = _baris_slider(f, baris[f], rentang.loc[f], terkunci, f"{prefix}_{f}")
+                hasil[f] = _baris_slider(f, baris[f], rentang.loc[f], terkunci, _kunci(prefix, f))
     _kotak_turunan(baris)
+    return hasil
+
+
+def reset_slider(baris: pd.Series, rentang: pd.DataFrame, prefix: str) -> None:
+    """Callback tombol reset: kembalikan semua slider ke nilai kondisi aktual."""
+    for f in TAMPILAN:
+        if not math.isnan(baris[f]):
+            lo, hi = rentang.loc[f, "min"], rentang.loc[f, "max"]
+            st.session_state[_kunci(prefix, f)] = min(max(float(baris[f]), lo), hi)
+
+
+def daftar_perubahan(aktual: pd.Series, simulasi: dict) -> list[str]:
+    """Frasa 'luas RTH dinaikkan menjadi 1,640 km²' untuk tiap variabel yang digeser."""
+    hasil = []
+    for _, _, fitur_list, _, _ in KELOMPOK:
+        for f in fitur_list:
+            lama, baru = aktual[f], simulasi[f]
+            if math.isnan(lama) or abs(baru - lama) < TAMPILAN[f][3] / 2:
+                continue
+            nama = PANJANG.get(f, TAMPILAN[f][0])
+            arah = "dinaikkan" if baru > lama else "diturunkan"
+            hasil.append(f"{nama} {arah} menjadi {nilai_tampil(f, baru).replace('j/km²', 'jiwa/km²')}")
     return hasil
 
 

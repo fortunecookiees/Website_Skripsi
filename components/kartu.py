@@ -2,18 +2,9 @@
 import pandas as pd
 import streamlit as st
 
-from core.config import kategori_ispu
+from core.config import SARAN_ISPU_PM25, kategori_ispu
 
 from .format import tanggal_pendek
-
-SARAN_KESEHATAN = {
-    "Baik": "Kualitas udara baik dan aman untuk beraktivitas di luar ruangan.",
-    "Sedang": "Kelompok sensitif disarankan mengurangi aktivitas luar ruangan yang lama.",
-    "Tidak Sehat": "Kelompok sensitif sebaiknya menghindari aktivitas luar ruangan; "
-                   "masyarakat umum disarankan mengurangi aktivitas fisik berat di luar ruangan.",
-    "Sangat Tidak Sehat": "Hindari aktivitas di luar ruangan dan gunakan masker bila harus keluar.",
-    "Berbahaya": "Semua orang disarankan tetap berada di dalam ruangan.",
-}
 
 
 def judul_kartu(teks: str, keterangan: str = "") -> str:
@@ -36,32 +27,73 @@ def angka_besar(nilai: float) -> str:
     return f'<div class="big"><span class="n" style="color:{k["warna_teks"]}">{k["nilai"]}</span><span class="u">ISPU</span></div>'
 
 
+def saran_kesehatan(nilai: float) -> str:
+    """Rekomendasi PermenLHK P.14/2020 untuk PM2.5 sesuai kategori nilai."""
+    sensitif, umum = SARAN_ISPU_PM25[kategori_ispu(nilai)["kategori"]]
+    if sensitif is None:
+        return f"{umum}."
+    kecil = lambda t: t[0].lower() + t[1:]  # noqa: E731
+    return f"Kelompok sensitif: {kecil(sensitif)}. Setiap orang: {kecil(umum)}."
+
+
+def _selisih(baru: int, lama: int, acuan: str) -> str:
+    d = baru - lama
+    if d > 0:
+        return f"Naik {d} poin dari {acuan} ({lama})"
+    if d < 0:
+        return f"Turun {-d} poin dari {acuan} ({lama})"
+    return f"Sama dengan {acuan} ({lama})"
+
+
 def teks_perubahan(pred_t1: float, pm25_hari_ini: float) -> str:
-    """Kalimat 'Naik/Turun X poin dari hari terakhir (Y).' + saran kesehatan kategori t+1."""
-    k = kategori_ispu(pred_t1)
-    hari_ini = kategori_ispu(pm25_hari_ini)["nilai"]
-    selisih = k["nilai"] - hari_ini
-    if selisih > 0:
-        arah = f"Naik {selisih} poin dari hari terakhir ({hari_ini})."
-    elif selisih < 0:
-        arah = f"Turun {-selisih} poin dari hari terakhir ({hari_ini})."
-    else:
-        arah = f"Sama dengan hari terakhir ({hari_ini})."
-    return f"{arah} {SARAN_KESEHATAN[k['kategori']]}"
+    """'Naik/Turun X poin dari hari terakhir (Y).' + saran kesehatan kategori t+1."""
+    baru, lama = kategori_ispu(pred_t1)["nilai"], kategori_ispu(pm25_hari_ini)["nilai"]
+    return f"{_selisih(baru, lama, 'hari terakhir')}. {saran_kesehatan(pred_t1)}"
 
 
 def teks_puncak(prediksi: pd.DataFrame) -> str:
-    """Kalimat puncak prediksi 7 hari, dibandingkan dengan kategori t+1."""
+    """Kalimat puncak 7 hari. 'Melewati ambang' hanya jika kategori puncak berbeda dari t+1."""
     nilai = [kategori_ispu(v)["nilai"] for v in prediksi["pm25"]]
     i = max(range(len(nilai)), key=nilai.__getitem__)  # puncak pertama jika ada nilai sama
     r = prediksi.iloc[i]
     k_puncak, k_t1 = kategori_ispu(r["pm25"]), kategori_ispu(prediksi["pm25"].iloc[0])
-    awal = f"Puncak diperkirakan pada t+{int(r['horizon'])} ({tanggal_pendek(r['tanggal'])}) dengan {k_puncak['nilai']} ISPU"
     if i == 0:
-        return f"{awal}, kemudian menurun pada hari-hari berikutnya."
+        return (f"Nilai tertinggi ada pada t+1 ({k_t1['nilai']} ISPU); "
+                "hari-hari berikutnya diperkirakan tidak melebihi nilai tersebut.")
+    awal = f"Puncak diperkirakan pada t+{int(r['horizon'])} ({tanggal_pendek(r['tanggal'])}) dengan {k_puncak['nilai']} ISPU"
     if k_puncak["kategori"] != k_t1["kategori"]:
         return f"{awal}, melewati ambang kategori {k_puncak['kategori']}."
-    return f"{awal}, masih dalam kategori {k_puncak['kategori']}."
+    return f"{awal}; selama 7 hari kategori tetap {k_t1['kategori']} seperti t+1."
+
+
+def teks_simulasi(pred_sim_t1: float, pred_akt_t1: float, perubahan: list[str]) -> str:
+    """Kalimat hasil simulasi t+1 dibanding mode aktual + daftar variabel yang diubah."""
+    baru, lama = kategori_ispu(pred_sim_t1)["nilai"], kategori_ispu(pred_akt_t1)["nilai"]
+    if not perubahan:
+        return f"Sama dengan mode aktual ({lama}). Geser slider untuk mengubah nilai variabel."
+    if len(perubahan) > 3:
+        daftar = ", ".join(perubahan[:3]) + f", dan {len(perubahan) - 3} variabel lain diubah"
+    elif len(perubahan) == 3:
+        daftar = ", ".join(perubahan[:2]) + f", dan {perubahan[2]}"
+    elif len(perubahan) == 2:
+        daftar = f"{perubahan[0]} dan {perubahan[1]}"
+    else:
+        daftar = perubahan[0]
+    if baru == lama:
+        return f"Tetap sama dengan mode aktual ({lama}) meskipun {daftar}."
+    return f"{_selisih(baru, lama, 'mode aktual')}, setelah {daftar}."
+
+
+def teks_bandingkan(akt: pd.DataFrame, sim: pd.DataFrame, horizon=(1, 4, 7)) -> str:
+    bagian = [f"t+{h} {kategori_ispu(akt['pm25'].iloc[h - 1])['nilai']} → "
+              f"{kategori_ispu(sim['pm25'].iloc[h - 1])['nilai']}" for h in horizon]
+    return "Perbandingan terhadap mode aktual: " + " · ".join(bagian)
+
+
+def banner_simulasi() -> None:
+    st.html('<div class="banner"><span class="dot"></span><span>Hasil pada mode simulasi '
+            '<b>bukan prediksi kondisi sebenarnya</b>. Nilai variabel diatur oleh pengguna dan hanya '
+            'digunakan untuk mengamati pengaruh perubahan terhadap keluaran model.</span></div>')
 
 
 def kotak_7_horizon(prediksi: pd.DataFrame) -> None:

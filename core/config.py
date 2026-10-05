@@ -68,6 +68,21 @@ KATEGORI_ISPU = [
 ]
 
 
+# Rekomendasi tindakan untuk PM2.5 per kategori — Lampiran II PermenLHK No. P.14/2020
+# (kelompok sensitif, setiap orang); kategori Baik hanya satu rekomendasi umum.
+SARAN_ISPU_PM25 = {
+    "Baik": (None, "Sangat baik melakukan kegiatan di luar"),
+    "Sedang": ("Kurangi aktivitas fisik yang terlalu lama atau berat",
+               "Masih dapat beraktivitas di luar"),
+    "Tidak Sehat": ("Boleh melakukan aktivitas di luar, tetapi mengambil rehat lebih sering",
+                    "Mengurangi aktivitas fisik yang terlalu lama di luar ruangan"),
+    "Sangat Tidak Sehat": ("Hindari semua aktivitas di luar. Perbanyak aktivitas di dalam ruangan",
+                           "Hindari aktivitas fisik yang terlalu lama di luar ruangan"),
+    "Berbahaya": ("Tetap di dalam ruangan dan hanya melakukan sedikit aktivitas",
+                  "Hindari semua aktivitas di luar"),
+}
+
+
 def bulatkan_ispu(nilai: float) -> int:
     """Bulatkan ke integer, setengah ke atas (50,5 -> 51). ISPU selalu bilangan bulat."""
     return int(np.floor(float(nilai) + 0.5))
