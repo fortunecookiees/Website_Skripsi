@@ -189,3 +189,21 @@ table.tbl tr.sel td { font-weight: 600; }
 }
 .st-key-reset_simulasi button p { font-size: 12px; }
 .st-key-reset_simulasi button:hover { border-color: var(--accent-line); color: var(--ink); }
+
+/* ---------------- Evaluation ---------------- */
+.stepHint { font-size: 11px; color: var(--muted); line-height: 38px; white-space: nowrap; }
+.stepHint b { color: var(--ink); }
+[class*="st-key-eval_geser"] button {
+  width: 34px; min-height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 3px;
+  background: var(--surface-2); color: var(--sub);
+}
+.st-key-eval_tanggal [data-baseweb="select"] > div { border-radius: 3px; font-weight: 600; font-size: 12.5px; }
+.diisi { font-size: 10px; color: var(--muted); font-style: italic; }
+table.tbl td.best { font-weight: 700; }
+.impcell { width: 190px; padding-right: 14px; }
+.impbar { height: 8px; background: #bdbdbd; }
+.impbar.sp { background: var(--ink); }
+table.tbl tr.spRow td { background: var(--spatial-soft); }
+table.tbl tr.spRow td:first-child { border-left: 3px solid var(--spatial); }
+table.tbl tr.gap td { color: var(--muted); text-align: center; padding: 4px; }
+.secHead { margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); }

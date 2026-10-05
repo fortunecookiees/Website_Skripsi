@@ -10,6 +10,9 @@ EVAL_PATH = MODEL_DIR / "hasil_evaluasi.json"
 
 HORIZONS = [1, 2, 3, 4, 5, 6, 7]
 
+# Anggaran evaluasi PSO & Random Search di train/training.py: N_PARTIKEL x (N_ITERASI + 1) = 20 x 41
+N_EVALUASI_OPTIMASI = 20 * (40 + 1)
+
 # ---------------------------------------------------------------------
 # Stasiun SPKU (nama sama persis dengan kolom `stasiun` di dataset)
 # ---------------------------------------------------------------------

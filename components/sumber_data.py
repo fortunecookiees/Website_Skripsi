@@ -1,9 +1,11 @@
 """Pemuatan model & data dengan cache Streamlit (lapisan tipis di atas core/)."""
+import json
+
 import pandas as pd
 import streamlit as st
 
-from core.config import FITUR
-from core.inference import muat_model, prediksi_7_hari
+from core.config import EVAL_PATH, FITUR
+from core.inference import muat_model, prediksi_7_hari, prediksi_batch
 from core.preprocessing import data_evaluasi, kondisi_terakhir, muat_dataset, preprocess
 
 
@@ -43,3 +45,23 @@ def rentang_fitur() -> pd.DataFrame:
 def periode_uji() -> tuple[pd.Timestamp, pd.Timestamp, int]:
     uji, batas = data_evaluasi(dataset())
     return batas, uji["tanggal"].max(), len(uji)
+
+
+@st.cache_data(show_spinner="Menghitung prediksi data uji…")
+def prediksi_uji() -> pd.DataFrame:
+    """Data uji (replikasi split training) + kolom pred_h1..pred_h7."""
+    uji, _ = data_evaluasi(dataset())
+    return pd.concat([uji, prediksi_batch(model(), uji)], axis=1)
+
+
+@st.cache_data
+def hasil_evaluasi() -> dict:
+    with open(EVAL_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+@st.cache_data
+def feature_importance(horizon: int = 1) -> pd.Series:
+    """Importance (gain, bawaan xgboost) model horizon tertentu, urut menurun."""
+    m = model()[horizon]["model"]
+    return pd.Series(m.feature_importances_, index=FITUR).sort_values(ascending=False)
