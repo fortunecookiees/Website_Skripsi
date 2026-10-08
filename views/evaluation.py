@@ -6,7 +6,8 @@ from components import sumber_data as sd
 from components.format import angka, tanggal_panjang
 from components.grafik import grafik_sekitar_acuan
 from components.kartu import judul_kartu
-from components.tabel_evaluasi import tabel_importance, tabel_metrik, tabel_optimasi, tabel_prediksi_vs_aktual
+from components.tabel_evaluasi import (tabel_importance, tabel_metrik, tabel_optimasi, tabel_prediksi_vs_aktual,
+                                       tabel_skenario)
 from components.tema import judul, label
 from core.config import HORIZONS, N_EVALUASI_OPTIMASI, STASIUN, kategori_ispu
 
@@ -100,6 +101,12 @@ def bagian_metrik() -> None:
         catatan = tabel_importance(sd.feature_importance(1))
         st.html(f'<div class="note">{catatan} Nilai kontribusi adalah <i>feature importance</i> tipe '
                 '<i>gain</i> dari model t+1.</div>')
+
+    label("Pengaruh Variabel Spasial (RMSE Data Uji)")
+    with st.container(key="card_eval_skenario"):
+        catatan = tabel_skenario(sd.hasil_skenario())
+        st.html(f'<div class="note">{catatan} Sumber: keluaran Google Colab <code>train/training.py</code> '
+                '(bagian 10).</div>')
 
 
 judul("Evaluasi Model", "Perbandingan nilai prediksi dan nilai aktual pada data historis")

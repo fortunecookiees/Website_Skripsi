@@ -13,7 +13,7 @@ def angka(nilai: float, desimal: int = 0) -> str:
     if nilai is None or (isinstance(nilai, float) and math.isnan(nilai)):
         return "–"
     s = f"{nilai:,.{desimal}f}"
-    return s.replace(",", "_").replace(".", ",").replace("_", ".")
+    return s.replace(",", "_").replace(".", ",").replace("_", ".").replace("-", "−")
 
 
 def tanggal_panjang(t) -> str:

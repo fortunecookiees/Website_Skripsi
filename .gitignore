@@ -179,3 +179,8 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+# Streamlit — kredensial (jangan di-commit)
+.streamlit/secrets.toml
+
+# Cache geocoding RTH (scripts/geocode_rth.py)
+data/.cache_geocode_rth.json

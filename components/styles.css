@@ -30,6 +30,10 @@
 html, body, .stApp, .stApp p, .stApp div, .stApp span, .stApp td, .stApp th, .stApp button, .stApp input {
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
 }
+/* jangan timpa font ikon Material milik Streamlit (expander, dsb.) */
+.stApp [data-testid="stIconMaterial"], .stApp [class*="material-symbols"] {
+  font-family: "Material Symbols Rounded" !important;
+}
 .stApp { color: var(--ink); }
 .block-container { padding-top: 2.2rem; padding-bottom: 2.5rem; max-width: 1180px; }
 
@@ -207,3 +211,69 @@ table.tbl tr.spRow td { background: var(--spatial-soft); }
 table.tbl tr.spRow td:first-child { border-left: 3px solid var(--spatial); }
 table.tbl tr.gap td { color: var(--muted); text-align: center; padding: 4px; }
 .secHead { margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); }
+
+/* ---------------- Information ---------------- */
+.section { margin-bottom: 22px; }
+.section h3 { font-size: 13.5px; font-weight: 700; margin: 0 0 9px; padding: 0; color: var(--ink); }
+.section p, .infoCard p { font-size: 11.5px; color: var(--sub); line-height: 1.75; margin: 0; }
+.section ol { font-size: 11.5px; color: var(--sub); line-height: 1.75; margin: 0; padding-left: 18px; }
+.section ol b { color: var(--ink); font-weight: 600; }
+.kv { display: grid; grid-template-columns: 170px 1fr; gap: 6px 14px; font-size: 11.5px; color: var(--sub); line-height: 1.7; }
+.kv b { color: var(--ink); font-weight: 600; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.infoCard { border: 1px solid var(--line); border-radius: 4px; background: var(--surface); padding: 15px; }
+.infoCard.sp { background: var(--spatial-soft); border-color: var(--spatial-line); border-left: 3px solid var(--ink); }
+@media (max-width: 760px) { .two { grid-template-columns: 1fr; } .kv { grid-template-columns: 1fr; } }
+
+/* ---------------- Unggah Data ---------------- */
+.infoBox {
+  display: flex; gap: 9px; align-items: flex-start; font-size: 11.5px; background: var(--surface-2);
+  border: 1px solid var(--line); border-left: 3px solid var(--ink); padding: 10px 12px;
+  margin-bottom: 16px; color: var(--sub); line-height: 1.55;
+}
+.infoBox .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); margin-top: 5px; flex-shrink: 0; }
+.errBox {
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--ink);
+  padding: 12px 14px; margin: 4px 0 16px; font-size: 11.5px; color: var(--sub); line-height: 1.6;
+}
+.errBox b.h { display: block; color: var(--ink); font-size: 12.5px; margin-bottom: 6px; }
+.errBox ul, .banner ul { margin: 0; padding-left: 18px; }
+.errBox li, .banner li { margin: 2px 0; }
+.banner b.h { display: block; color: var(--ink); margin-bottom: 4px; }
+.langkah { font-size: 11.5px; color: var(--sub); line-height: 1.7; margin: 0 0 10px; }
+.langkah ul { margin: 6px 0 0; padding-left: 18px; }
+table.tbl.kondisi td { padding: 6px 9px; }
+table.tbl tr.grpRow td {
+  font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); font-weight: 700;
+  padding-top: 12px; border-bottom: 1px solid var(--line);
+}
+.luar { font-size: 10px; color: var(--sub); font-weight: 600; margin-left: 4px; }
+[data-testid="stDownloadButton"] button {
+  border: 1px solid var(--line); border-radius: 3px; background: var(--surface-2); color: var(--ink); min-height: 34px;
+}
+[data-testid="stDownloadButton"] button p { font-size: 12px; font-weight: 600; }
+[data-testid="stFileUploaderDropzone"] { border-radius: 3px; background: var(--surface-2); }
+.stApp .langkah li, .stApp .banner li, .stApp .errBox li, .stApp .section li {
+  font-size: 11.5px; line-height: 1.6; margin: 2px 0; padding: 0;
+}
+
+/* ---------------- Akun ---------------- */
+.navNote { font-size: 9.5px; color: var(--muted); margin: -6px 0 6px 12px; letter-spacing: 0.02em; }
+.akunBox {
+  margin-top: 16px; padding: 12px; border: 1px solid var(--line); border-radius: 3px; background: var(--surface);
+  font-size: 10.5px; color: var(--muted); line-height: 1.5; display: flex; flex-direction: column;
+}
+.akunBox b { color: var(--ink); font-size: 12.5px; margin: 2px 0 1px; word-break: break-word; }
+.akunBox span:last-child { word-break: break-all; }
+.st-key-tombol_keluar button, .st-key-akun_keluar button, .st-key-ajakan_daftar button {
+  border: 1px solid var(--line); border-radius: 3px; background: var(--surface-2); color: var(--sub); min-height: 32px;
+}
+.st-key-tombol_keluar button p, .st-key-akun_keluar button p, .st-key-ajakan_daftar button p { font-size: 12px; }
+.st-key-tombol_keluar { margin-top: 6px; }
+.st-key-tombol_keluar [data-testid="stButton"], .st-key-tombol_keluar button { width: 100%; }
+.st-key-ajakan_masuk button, [class*="st-key-card_akun"] [data-testid="stFormSubmitButton"] button {
+  border-radius: 3px; min-height: 34px;
+}
+[class*="st-key-card_akun"] [data-testid="stTextInput"] label p { font-size: 11.5px; color: var(--sub); }
+[class*="st-key-card_akun"] [data-testid="stTextInput"] input { font-size: 13px; }
+[class*="st-key-card_akun"] [data-baseweb="input"] { border-radius: 3px; }

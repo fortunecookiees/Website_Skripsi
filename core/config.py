@@ -7,11 +7,20 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT / "data" / "datasetskripsi.xlsx"
 MODEL_DIR = ROOT / "models"
 EVAL_PATH = MODEL_DIR / "hasil_evaluasi.json"
+SKENARIO_PATH = MODEL_DIR / "hasil_skenario.json"
+RTH_KOORDINAT_PATH = ROOT / "data" / "rth_koordinat.csv"  # hasil scripts/geocode_rth.py
 
 HORIZONS = [1, 2, 3, 4, 5, 6, 7]
 
-# Anggaran evaluasi PSO & Random Search di train/training.py: N_PARTIKEL x (N_ITERASI + 1) = 20 x 41
-N_EVALUASI_OPTIMASI = 20 * (40 + 1)
+# Konfigurasi optimasi di train/training.py (bagian 7 & 14) — hanya untuk ditampilkan
+N_PARTIKEL, N_ITERASI = 20, 40
+N_EVALUASI_OPTIMASI = N_PARTIKEL * (N_ITERASI + 1)  # anggaran evaluasi PSO = Random Search
+N_ESTIMATORS_MAKS, EARLY_STOPPING = 600, 50
+RENTANG_PSO = {  # batas bawah & atas ruang pencarian (BB, BA)
+    "max_depth": (3, 10), "learning_rate": (0.01, 0.30), "subsample": (0.50, 1.00),
+    "colsample_bytree": (0.50, 1.00), "min_child_weight": (1, 10), "reg_alpha": (0.00, 2.00),
+    "reg_lambda": (0.50, 5.00),
+}
 
 # ---------------------------------------------------------------------
 # Stasiun SPKU (nama sama persis dengan kolom `stasiun` di dataset)

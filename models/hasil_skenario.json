@@ -1,0 +1,20 @@
+{
+  "sumber": "Output Google Colab train/training.py bagian 10 (skenario S1/S2/S3 + uji Diebold-Mariano), hyperparameter best_pso",
+  "keterangan": {
+    "S1": "Tanpa variabel statis (19 fitur: FITUR tanpa kepadatan & RTH)",
+    "S2": "S1 + penanda stasiun (dummy one-hot)",
+    "S3": "S1 + kepadatan penduduk & luas RTH",
+    "DM": "Statistik Diebold-Mariano S1 vs S3 (d = e_S1^2 - e_S3^2; DM > 0 berarti S3 lebih baik)",
+    "p": "p-value dua sisi uji DM"
+  },
+  "metrik": "RMSE data uji (hanya nilai PM2.5 asli)",
+  "skenario": {
+    "1": {"S1": 12.352, "S2": 12.451, "S3": 12.290, "DM": 0.590, "p": 0.5554},
+    "2": {"S1": 14.040, "S2": 14.105, "S3": 14.187, "DM": -0.850, "p": 0.3958},
+    "3": {"S1": 13.993, "S2": 13.899, "S3": 14.245, "DM": -1.596, "p": 0.1111},
+    "4": {"S1": 14.278, "S2": 14.409, "S3": 14.564, "DM": -1.612, "p": 0.1076},
+    "5": {"S1": 14.646, "S2": 14.408, "S3": 14.897, "DM": -1.801, "p": 0.0723},
+    "6": {"S1": 14.800, "S2": 14.941, "S3": 14.643, "DM": 0.906, "p": 0.3652},
+    "7": {"S1": 14.548, "S2": 14.643, "S3": 14.272, "DM": 1.792, "p": 0.0738}
+  }
+}

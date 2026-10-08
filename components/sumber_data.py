@@ -4,9 +4,10 @@ import json
 import pandas as pd
 import streamlit as st
 
-from core.config import EVAL_PATH, FITUR
+from core.config import EVAL_PATH, FITUR, RTH_KOORDINAT_PATH, SKENARIO_PATH
 from core.inference import muat_model, prediksi_7_hari, prediksi_batch
 from core.preprocessing import data_evaluasi, kondisi_terakhir, muat_dataset, preprocess
+from core.unggah import buat_template
 
 
 @st.cache_resource(show_spinner="Memuat model…")
@@ -15,8 +16,13 @@ def model() -> dict:
 
 
 @st.cache_data(show_spinner="Memuat dataset…")
+def dataset_mentah() -> pd.DataFrame:
+    return muat_dataset()
+
+
+@st.cache_data(show_spinner="Memuat dataset…")
 def dataset() -> pd.DataFrame:
-    return preprocess(muat_dataset())
+    return preprocess(dataset_mentah())
 
 
 @st.cache_data
@@ -65,3 +71,40 @@ def feature_importance(horizon: int = 1) -> pd.Series:
     """Importance (gain, bawaan xgboost) model horizon tertentu, urut menurun."""
     m = model()[horizon]["model"]
     return pd.Series(m.feature_importances_, index=FITUR).sort_values(ascending=False)
+
+
+@st.cache_data
+def hasil_skenario() -> dict:
+    with open(SKENARIO_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+@st.cache_data
+def rentang_tanggal() -> tuple[pd.Timestamp, pd.Timestamp]:
+    t = dataset()["tanggal"]
+    return t.min(), t.max()
+
+
+@st.cache_data
+def nilai_spasial() -> pd.DataFrame:
+    """Kepadatan & luas RTH per stasiun per tahun (nilai pertama tiap tahun, seperti cek di training)."""
+    d = dataset()
+    return (d.groupby(["stasiun", d["tanggal"].dt.year])[["kepadatan_penduduk_jiwa_km2", "luas_rth_km2"]]
+            .first().rename_axis(["stasiun", "tahun"]).reset_index())
+
+
+@st.cache_data(show_spinner=False)
+def template_unggah() -> bytes:
+    return buat_template(dataset_mentah())
+
+
+@st.cache_data
+def titik_rth() -> pd.DataFrame:
+    """Titik RTH yang lokasinya terverifikasi (presisi objek/manual) dari data/rth_koordinat.csv.
+
+    File dihasilkan sekali oleh scripts/geocode_rth.py; jika belum ada, peta tampil tanpa titik RTH.
+    """
+    if not RTH_KOORDINAT_PATH.exists():
+        return pd.DataFrame(columns=["kecamatan", "kelurahan", "nama_rth", "jenis_rth", "luas_m2", "lat", "lon", "presisi"])
+    d = pd.read_csv(RTH_KOORDINAT_PATH, encoding="utf-8-sig")
+    return d[d["presisi"].isin(["objek", "manual"])].dropna(subset=["lat", "lon"]).reset_index(drop=True)

@@ -47,7 +47,7 @@ def mode_aktual(stasiun: str) -> None:
     kotak_7_horizon(prediksi)
     label("Peta Stasiun Pemantauan — Prediksi t+1")
     with st.container(key="card_peta"):
-        peta_stasiun(pred_t1, luas_rth, key="peta_aktual")
+        peta_stasiun(pred_t1, luas_rth, key="peta_aktual", titik_rth=sd.titik_rth())
 
 
 def mode_simulasi(stasiun: str) -> None:

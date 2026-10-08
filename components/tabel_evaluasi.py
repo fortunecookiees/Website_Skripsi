@@ -97,3 +97,35 @@ def tabel_importance(imp: pd.Series, n: int = 10) -> str:
     return (f"Luas RTH menempati peringkat <b>{rth}</b>, sedangkan kepadatan penduduk menempati peringkat "
             f"<b>{pdt}</b> dari {len(imp)} fitur masukan. Pengaruh kedua variabel spasial diuji lebih lanjut "
             "melalui perbandingan tiga skenario.")
+
+
+def tabel_skenario(data: dict, alpha: float = 0.05) -> str:
+    """RMSE uji S1/S2/S3 + uji DM S1 vs S3; RMSE terkecil per horizon ditebalkan. Mengembalikan catatan."""
+    sk = data["skenario"]
+    isi, s3_lebih_baik, signifikan = [], [], []
+    for h in map(str, HORIZONS):
+        r = sk[h]
+        terbaik = min(("S1", "S2", "S3"), key=r.get)
+        sel = "".join(f'<td class="num{" best" if k == terbaik else ""}">{angka(r[k], 3)}</td>' for k in ("S1", "S2", "S3"))
+        if r["S3"] < r["S1"]:
+            s3_lebih_baik.append(h)
+        if r["p"] < alpha:
+            signifikan.append(h)
+        isi.append(f'<tr><td>t+{h}</td>{sel}<td class="num">{angka(r["DM"], 3)}</td>'
+                   f'<td class="num">{angka(r["p"], 4)}</td></tr>')
+    st.html('<table class="tbl"><tr><th>Horizon</th><th class="num">S1 · tanpa statis</th>'
+            '<th class="num">S2 · + penanda stasiun</th><th class="num">S3 · + kepadatan &amp; RTH</th>'
+            f'<th class="num">DM (S1 vs S3)</th><th class="num">p</th></tr>{"".join(isi)}</table>')
+
+    daftar = ", ".join(f"t+{h}" for h in s3_lebih_baik)
+    kalimat = [f"S3 menghasilkan RMSE lebih kecil daripada S1 pada <b>{len(s3_lebih_baik)} dari {len(HORIZONS)}</b> "
+               f"horizon{f' ({daftar})' if s3_lebih_baik else ''}."]
+    if signifikan:
+        kalimat.append(f"Perbedaan S1 dan S3 signifikan pada p &lt; {angka(alpha, 2)} di "
+                       f"{', '.join(f't+{h}' for h in signifikan)}.")
+    else:
+        h_min = min(sk, key=lambda h: sk[h]["p"])
+        kalimat.append(f"Uji Diebold-Mariano tidak menunjukkan perbedaan signifikan pada p &lt; {angka(alpha, 2)} "
+                       f"di seluruh horizon (p terkecil {angka(sk[h_min]['p'], 4)} pada t+{h_min}).")
+    kalimat.append("DM &gt; 0 berarti galat S3 lebih kecil daripada S1.")
+    return " ".join(kalimat)

@@ -9,6 +9,7 @@ openpyxl
 
 # Aplikasi
 streamlit
+requests
 plotly
 folium
 streamlit-folium
