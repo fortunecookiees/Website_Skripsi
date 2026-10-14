@@ -97,15 +97,20 @@ def banner_simulasi() -> None:
 
 
 def kotak_7_horizon(prediksi: pd.DataFrame) -> None:
+    """Garis waktu t+1..t+7: titik di garis, nilai, kategori, dan meter kecil (skala 0–200 ISPU)."""
     kotak = []
     for _, r in prediksi.iterrows():
         k = kategori_ispu(r["pm25"])
+        h = int(r["horizon"])
         nama = "Tdk Sehat" if k["kategori"] == "Tidak Sehat" else k["kategori"]
+        isi = min(100, k["nilai"] / 2)
         kotak.append(
-            f'<div class="hbox"><div class="d">t+{int(r["horizon"])}</div>'
+            f'<div class="hbox{" besok" if h == 1 else ""}"><span class="hDot"></span>'
+            f'<div class="d">{"Besok" if h == 1 else f"t+{h}"}</div>'
             f'<div class="dt">{tanggal_pendek(r["tanggal"])}</div>'
             f'<div class="n" style="color:{k["warna_teks"]}">{k["nilai"]}</div>'
-            f'<div class="k" style="background:{k["bg"]};color:{k["warna_teks"]}">{nama}</div></div>'
+            f'<div class="k" style="background:{k["bg"]};color:{k["warna_teks"]}">{nama}</div>'
+            f'<div class="meter"><i style="width:{isi:.0f}%;background:{k["warna"]}"></i></div></div>'
         )
     st.html(f'<div class="h7">{"".join(kotak)}</div>')
 

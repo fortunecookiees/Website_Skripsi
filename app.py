@@ -2,6 +2,7 @@
 
 Jalankan:  streamlit run app.py
 """
+from datetime import date
 from pathlib import Path
 
 import streamlit as st
@@ -10,7 +11,7 @@ from components import akun
 from components.logo import NAMA, TAGLINE, logo_svg
 from components.format import tanggal_panjang, tanggal_pendek
 from components.sumber_data import periode_uji, rentang_tanggal, sumber_dashboard, tanggal_terakhir_dashboard
-from components.tema import pasang_css
+from components.tema import pasang_css, tandai_halaman
 
 st.set_page_config(page_title=f"{NAMA} · {TAGLINE}", page_icon=str(Path(__file__).with_name("assets") / "logo.png"),
                    layout="wide", initial_sidebar_state="auto")  # auto: terbuka di desktop, tertutup di HP
@@ -82,8 +83,10 @@ with st.sidebar:
 if pesan := st.session_state.pop(akun.KUNCI_PESAN, None):
     st.toast(pesan)
 
+tandai_halaman(aktif.title, IKON[aktif.title])
 aktif.run()
 
-st.html(f'<div class="footer"><span class="footBrand">{logo_svg(16, latar="#1C1C1C", garis="#FFFFFF")}<b>{NAMA}</b> · {TAGLINE}</span>'
-        '<span>XGBoost + PSO · 5 SPKU · t+1 … t+7</span>'
-        '<span>Fortuna · 535230144 · Teknik Informatika, Universitas Tarumanagara</span></div>')
+
+st.html(f'<div class="footer"><div class="ftLogo">{logo_svg(28)}<div><b>{NAMA}</b><span>{TAGLINE}</span></div></div>'
+        f'<div class="ftKanan">© {date.today().year} {NAMA} · Fortuna · Teknik Informatika, '
+        f'Universitas Tarumanagara</div><div class="ftWord" aria-hidden="true">{NAMA}</div></div>')

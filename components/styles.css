@@ -45,15 +45,17 @@ html, body, .stApp, .stApp p, .stApp div, .stApp span, .stApp td, .stApp th, .st
 .stApp { color: var(--ink); background: var(--page); }
 [data-testid="stHeader"] { background: transparent; }
 [data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stBottomBlockContainer"] { background: var(--page); }
-.block-container { padding-top: 2.2rem; padding-bottom: 3rem; max-width: 1180px; }
+.block-container { padding-top: 2.2rem; padding-bottom: 3rem; padding-left: 2rem; padding-right: 2rem; max-width: none; }
 
 /* ---------------- Sidebar (ink) ---------------- */
 section[data-testid="stSidebar"] {
   background: var(--side);
   border-right: none;
-  width: 220px !important;
-  min-width: 220px !important;
 }
+/* lebar tetap hanya saat terbuka; saat ditutup ruangnya harus ikut hilang agar konten melebar penuh */
+section[data-testid="stSidebar"][aria-expanded="true"] { width: 220px !important; min-width: 220px !important; }
+section[data-testid="stSidebar"][aria-expanded="false"] { width: 0 !important; min-width: 0 !important; }
+.stApp:has(section[data-testid="stSidebar"][aria-expanded="false"]) .block-container { padding-top: 3.4rem; }
 section[data-testid="stSidebar"] > div { padding-top: 0.6rem; }
 section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button,
 section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] span { color: var(--side-text) !important; }
@@ -454,32 +456,28 @@ table.heatTbl th.num { text-align: center; }
 [class*="st-key-card_profil"] [data-baseweb="input"] { border-radius: var(--radius); }
 .simKosong b { display: inline-block; margin-bottom: 4px; }
 
-/* footer */
-.footer {
-  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 18px; margin-top: 38px; padding-top: 16px;
-  border-top: 1px solid var(--line); font-size: 10.5px; color: var(--muted);
-}
 
 /* ================= Animasi ================= */
-@keyframes naik { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+/* muncul halus: geser kecil + fade panjang dengan kurva ease-out lembut (tanpa pantulan) */
+@keyframes naik { from { opacity: 0; transform: translate3d(0, 10px, 0); } to { opacity: 1; transform: none; } }
 @keyframes muncul { from { opacity: 0; } to { opacity: 1; } }
-@keyframes letup { 0% { opacity: 0; transform: scale(.92); } 60% { transform: scale(1.03); } 100% { opacity: 1; transform: none; } }
+@keyframes letup { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
 
 [class*="st-key-card"], .kpi, .section, .profilHero, .banner, .infoBox, .simKosong, .filterInfo {
-  animation: naik .5s cubic-bezier(.2, .7, .2, 1) both;
+  animation: naik 1.1s cubic-bezier(.33, 1, .68, 1) both; backface-visibility: hidden;
 }
-.kpiRow .kpi:nth-child(2) { animation-delay: .06s; }
-.kpiRow .kpi:nth-child(3) { animation-delay: .12s; }
-.kpiRow .kpi:nth-child(4) { animation-delay: .18s; }
-.h7 .hbox { animation: naik .45s cubic-bezier(.2, .7, .2, 1) both; }
-.h7 .hbox:nth-child(2) { animation-delay: .04s; }
-.h7 .hbox:nth-child(3) { animation-delay: .08s; }
-.h7 .hbox:nth-child(4) { animation-delay: .12s; }
-.h7 .hbox:nth-child(5) { animation-delay: .16s; }
-.h7 .hbox:nth-child(6) { animation-delay: .20s; }
-.h7 .hbox:nth-child(7) { animation-delay: .24s; }
-.big .n, .avatarBesar { animation: letup .55s cubic-bezier(.2, .7, .2, 1) both; }
-h2.title, .subt { animation: muncul .5s ease both; }
+.kpiRow .kpi:nth-child(2) { animation-delay: .09s; }
+.kpiRow .kpi:nth-child(3) { animation-delay: .18s; }
+.kpiRow .kpi:nth-child(4) { animation-delay: .27s; }
+.h7 .hbox { animation: naik 1s cubic-bezier(.33, 1, .68, 1) both; }
+.h7 .hbox:nth-child(2) { animation-delay: .07s; }
+.h7 .hbox:nth-child(3) { animation-delay: .14s; }
+.h7 .hbox:nth-child(4) { animation-delay: .21s; }
+.h7 .hbox:nth-child(5) { animation-delay: .28s; }
+.h7 .hbox:nth-child(6) { animation-delay: .35s; }
+.h7 .hbox:nth-child(7) { animation-delay: .42s; }
+.big .n, .avatarBesar { animation: letup .95s cubic-bezier(.33, 1, .68, 1) both; }
+h2.title, .subt { animation: muncul .9s ease-out both; }
 
 /* interaksi halus */
 [class*="st-key-card"], .kpi, .hbox, .section, .infoCard {
@@ -505,7 +503,6 @@ table.tbl td { transition: background-color .15s ease; }
   .profilHero { padding: 18px; gap: 14px; }
   .avatarBesar { width: 52px; height: 52px; font-size: 21px; }
   .phNama { font-size: 17px; }
-  .footer { flex-direction: column; }
   .filterInfo { border-radius: var(--radius); }
 }
 
@@ -518,15 +515,12 @@ table.tbl td { transition: background-color .15s ease; }
 .brand .logo { flex-shrink: 0; border-radius: 8px; transition: transform .35s cubic-bezier(.2,.7,.2,1); }
 .brand:hover .logo { transform: rotate(-6deg) scale(1.05); }
 .brandText { font-size: 15px; letter-spacing: -0.01em; }
-.footBrand { display: inline-flex; align-items: center; gap: 7px; }
-.footBrand b { color: var(--ink); }
-.footBrand .logo { border-radius: 4px; }
 .brandText span { font-size: 9.5px; white-space: nowrap; }
 
 /* ================= Admin & sumber data ================= */
 .sumberData {
   display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--sub);
-  background: var(--surface); border: 1px solid var(--line); border-radius: 100px; padding: 5px 13px; margin: -8px 0 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 100px; padding: 5px 13px; margin: 0 0 16px;
 }
 .sumberData b { color: var(--ink); font-weight: 600; }
 .sumberData .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
@@ -554,3 +548,191 @@ table.tbl td { transition: background-color .15s ease; }
 @media (max-width: 640px) {
   [class*="st-key-usr_"] [data-testid="stHorizontalBlock"], [class*="st-key-ver_"] [data-testid="stHorizontalBlock"] { gap: 4px; }
 }
+
+/* ================= Kerangka halaman: header bar, sidebar, loading, footer ================= */
+[data-testid="stDecoration"] { display: none; }
+.block-container { padding-top: 1.6rem; }
+
+/* header halaman berbentuk bar (tidak lagi teks mengambang) */
+.pageHead {
+  display: flex; align-items: center; gap: 16px; margin: 0 0 20px; padding: 16px 20px;
+  background: var(--surface); border: 1px solid #e4e4e1; border-radius: 10px; box-shadow: var(--shadow);
+  position: relative; overflow: hidden; animation: naik 1.1s cubic-bezier(.33, 1, .68, 1) both;
+}
+.phIkon {
+  width: 46px; height: 46px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center;
+  background: var(--side); color: #ffffff; box-shadow: 0 4px 12px rgba(28,28,28,.18);
+}
+.phIkon .material-symbols-rounded { font-size: 24px; line-height: 1; }
+.phTeks { min-width: 0; }
+.crumb { font-size: 10.5px; font-weight: 600; color: var(--muted); letter-spacing: .02em; margin-bottom: 2px; }
+.crumb span { margin: 0 6px; color: var(--accent-line); }
+.pageHead h2.title { font-size: 22px; margin: 0; line-height: 1.2; animation: none; }
+.pageHead .subt { margin: 3px 0 0; font-size: 12.5px; animation: none; }
+
+/* sidebar: brand NafasKota langsung di atas, tombol tutup sidebar melayang di pojok */
+section[data-testid="stSidebar"] > div { padding-top: 0; }
+section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] {
+  position: absolute; top: 8px; right: 8px; height: auto; min-height: 0; padding: 0; margin: 0; z-index: 5;
+}
+section[data-testid="stSidebar"] [data-testid="stLogoSpacer"] { display: none; }
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] { padding-top: 26px; }
+
+/* jarak antartombol segmented control (Mode Aktual/Simulasi, Harian/Mingguan/Bulanan) */
+[data-testid="stButtonGroup"] [role="radiogroup"], [data-testid="stButtonGroup"] div:has(> button) { gap: 6px !important; }
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"] {
+  margin: 0 !important; border-radius: var(--radius) !important; padding-left: 14px; padding-right: 14px;
+}
+
+/* indikator loading: garis berjalan di atas + kapsul "Memuat…" saat skrip berjalan */
+@keyframes jalan { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+@keyframes putar { to { transform: rotate(360deg); } }
+@keyframes tampakTunda { 0%, 60% { opacity: 0; } 100% { opacity: 1; } }
+.stApp::before {
+  content: ""; position: fixed; top: 0; left: 0; height: 3px; width: 40%; z-index: 1000000; pointer-events: none;
+  background: linear-gradient(90deg, rgba(28,28,28,0), var(--ink), rgba(28,28,28,0)); opacity: 0;
+}
+.stApp[data-test-script-state="running"]::before { opacity: 1; animation: jalan 1.1s ease-in-out infinite; }
+.stApp::after {
+  content: "Memuat…"; position: fixed; right: 22px; bottom: 22px; z-index: 1000000; pointer-events: none;
+  font: 600 12px Inter, system-ui, sans-serif; color: #ffffff; background: var(--side);
+  padding: 9px 40px 9px 16px; border-radius: 100px; box-shadow: 0 6px 20px rgba(28,28,28,.25);
+  opacity: 0; transform: translateY(8px); transition: opacity .2s ease, transform .2s ease; visibility: hidden;
+}
+[data-testid="stMain"]::after {
+  content: ""; position: fixed; right: 36px; bottom: 33px; width: 14px; height: 14px; z-index: 1000001;
+  box-sizing: border-box; border-radius: 50%; border: 2px solid rgba(255,255,255,.25); border-top-color: #ffffff;
+  pointer-events: none; visibility: hidden; opacity: 0;
+}
+.stApp[data-test-script-state="running"]::after { visibility: visible; opacity: 1; transform: none;
+  animation: tampakTunda .6s ease both; }
+.stApp[data-test-script-state="running"] [data-testid="stMain"]::after { visibility: visible; opacity: 1;
+  animation: putar .8s linear infinite, tampakTunda .6s ease both; }
+
+/* footer tetap di dasar halaman walau konten masih dimuat */
+[data-testid="stMain"] .block-container { min-height: 100vh; display: flex; flex-direction: column; }
+[data-testid="stMain"] .block-container > [data-testid="stVerticalBlock"] { flex: 1 0 auto; }
+[data-testid="stElementContainer"]:has(.footer) { margin-top: auto; }
+
+/* footer selayaknya footer: menempel kiri-kanan-bawah (meniadakan padding .block-container) */
+.footer {
+  margin: 40px -2rem -3rem; padding: 16px 2rem; background: var(--side); color: #8c8c89;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 24px;
+  font-size: 11px; line-height: 1.5; position: relative; overflow: hidden; min-height: 128px;
+}
+.footer > :not(.ftWord) { position: relative; z-index: 1; }
+/* wordmark besar bergaris tipis di belakang isi footer */
+.ftWord {
+  position: absolute; left: 50%; bottom: -.2em; transform: translateX(-50%); z-index: 0;
+  font: 800 clamp(56px, 8vw, 118px)/1 Inter, system-ui, sans-serif; letter-spacing: -.05em; white-space: nowrap;
+  color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,.13); user-select: none; pointer-events: none;
+}
+.ftLogo { display: flex; align-items: center; gap: 10px; }
+.ftLogo .logo { border-radius: 7px; }
+.ftLogo b { display: block; color: #ffffff; font-size: 14px; letter-spacing: -.01em; }
+.ftLogo span { display: block; font-size: 10px; color: var(--side-text); }
+
+/* peta: bar atas dengan toggle titik RTH */
+[class*="st-key-petabar_"] { margin-bottom: 8px; }
+.petaInfo { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--sub); }
+.petaInfo .material-symbols-rounded { font-size: 17px; color: var(--ink); }
+[class*="st-key-petabar_"] [data-testid="stCheckbox"] {
+  margin-left: auto; width: fit-content; background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 100px; padding: 5px 14px 5px 10px; transition: border-color .2s ease, background-color .2s ease;
+}
+[class*="st-key-petabar_"] [data-testid="stCheckbox"]:hover { border-color: var(--accent-line); background: var(--surface); }
+[class*="st-key-petabar_"] [data-testid="stCheckbox"]:has(input:checked) { background: var(--spatial-soft); border-color: var(--ink); }
+[class*="st-key-petabar_"] [data-testid="stCheckbox"] label p { font-size: 12px; font-weight: 600; color: var(--ink); }
+
+@media (max-width: 640px) {
+  .block-container { padding-top: 3.4rem; }  /* ruang untuk tombol buka sidebar di pojok kiri atas */
+  .pageHead { padding: 13px 14px; gap: 12px; }
+  .phIkon { width: 38px; height: 38px; border-radius: 9px; }
+  .phIkon .material-symbols-rounded { font-size: 20px; }
+  .pageHead h2.title { font-size: 18px; }
+  .pageHead .subt { font-size: 11.5px; }
+  .footer { margin: 32px -1rem -2.5rem; padding: 14px 1rem; flex-direction: column; align-items: flex-start; }
+  [class*="st-key-petabar_"] [data-testid="stCheckbox"] { margin-left: 0; }
+  .stApp::after { right: 14px; bottom: 14px; }
+  [data-testid="stMain"]::after { right: 28px; bottom: 25px; }
+}
+
+/* ================= Sentuhan unik (tetap palet netral) ================= */
+@keyframes hembus { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-14px); } }
+@keyframes denyut { 0%, 100% { box-shadow: 0 0 0 0 rgba(28,28,28,.35); } 50% { box-shadow: 0 0 0 5px rgba(28,28,28,0); } }
+@keyframes isi { from { transform: scaleX(0); } }
+
+/* header: pola titik memudar di kanan + motif hembusan logo yang bergerak pelan, ikon sedikit miring */
+.pageHead::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(28,28,28,.11) 1px, transparent 1.3px); background-size: 12px 12px;
+  -webkit-mask-image: linear-gradient(to left, #000 0%, transparent 50%); mask-image: linear-gradient(to left, #000 0%, transparent 50%);
+}
+.phDeko { position: absolute; right: 44px; top: 50%; width: 112px; height: 112px; margin-top: -56px; opacity: .09;
+          pointer-events: none; animation: hembus 7s ease-in-out infinite; }
+.phDeko.d2 { right: 170px; width: 54px; height: 54px; margin-top: -44px; opacity: .06; animation-duration: 9s; animation-delay: -3s; }
+.phTeks, .phIkon { position: relative; z-index: 1; }
+.phIkon { transform: rotate(-6deg); transition: transform .45s cubic-bezier(.33, 1, .68, 1); }
+.pageHead:hover .phIkon { transform: rotate(0deg) scale(1.05); }
+
+/* label langkah: 01 ─ ─ ─ */
+.lbl { display: flex; align-items: center; gap: 8px; }
+.lbl .step {
+  display: inline-grid; place-items: center; height: 20px; min-width: 26px; padding: 0 6px; border-radius: 100px;
+  background: var(--ink); color: #ffffff; font-size: 10px; letter-spacing: .02em; font-variant-numeric: tabular-nums;
+}
+.lbl:has(.step)::after {
+  content: ""; flex: 1; height: 1px; margin-left: 4px;
+  background: repeating-linear-gradient(90deg, var(--accent-line) 0 4px, transparent 4px 8px);
+}
+.st-key-pemilih [data-testid="stHorizontalBlock"] { align-items: flex-start; }
+
+/* stiker "novelty penelitian" */
+.st-key-grp_spasial .grpNote {
+  font-style: normal; font-weight: 700; font-size: 9.5px; letter-spacing: .04em; color: #ffffff; background: var(--ink);
+  padding: 3px 9px; border-radius: 4px; transform: rotate(-4deg); box-shadow: 2px 2px 0 rgba(28,28,28,.2);
+  transition: transform .35s cubic-bezier(.33, 1, .68, 1);
+}
+.st-key-grp_spasial:hover .grpNote { transform: rotate(2deg) scale(1.06); }
+
+/* watermark "PM2.5" bergaris di kartu prediksi */
+.st-key-card_prediksi { position: relative; overflow: hidden; }
+.st-key-card_prediksi::before {
+  content: "PM2.5"; position: absolute; right: -8px; top: 58px; pointer-events: none;
+  font: 800 92px/1 Inter, system-ui, sans-serif; letter-spacing: -.05em; color: transparent;
+  -webkit-text-stroke: 1.5px rgba(28,28,28,.07);
+}
+
+/* 7 horizon sebagai garis waktu: titik di garis putus-putus, "Besok" menonjol, meter kecil */
+.h7 { position: relative; padding-top: 16px; }
+.h7::before { content: ""; position: absolute; left: 7%; right: 7%; top: 5px; border-top: 2px dashed var(--accent-line); }
+.hbox { position: relative; overflow: visible; }
+.hDot {
+  position: absolute; top: -16px; left: 50%; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%;
+  background: var(--page); border: 2px solid var(--accent-line); box-sizing: border-box;
+}
+.hbox.besok { top: -5px; border: 1.5px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+.hbox.besok .d { color: var(--ink); font-weight: 700; }
+.hbox.besok .hDot { top: -11px; background: var(--ink); border-color: var(--ink); animation: denyut 2.2s ease-in-out infinite; }
+.hbox.besok:hover { box-shadow: 6px 6px 0 var(--ink); }
+.meter { height: 4px; margin: 9px 8px 0; border-radius: 100px; background: var(--line-2); overflow: hidden; }
+.meter i { display: block; height: 100%; border-radius: 100px; transform-origin: left; opacity: .85;
+           animation: isi 1.3s cubic-bezier(.33, 1, .68, 1) .35s both; }
+
+/* sidebar: titik berdenyut di menu aktif */
+.navActive::after {
+  content: ""; margin-left: auto; width: 6px; height: 6px; border-radius: 50%; background: var(--ink);
+  animation: denyut 2.2s ease-in-out infinite;
+}
+
+
+@media (max-width: 760px) {
+  .h7::before, .hDot { display: none; }
+  .h7 { padding-top: 6px; }
+}
+@media (max-width: 640px) {
+  .phDeko { right: 10px; width: 80px; height: 80px; margin-top: -40px; }
+  .phDeko.d2 { display: none; }
+  .st-key-card_prediksi::before { font-size: 80px; }
+}
+.navActive { white-space: nowrap; }

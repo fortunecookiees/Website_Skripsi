@@ -33,8 +33,8 @@ def _popup_rth(r: pd.Series) -> folium.Popup:
 
 
 def _layer_rth(titik: pd.DataFrame) -> folium.FeatureGroup:
-    """Titik RTH terverifikasi; default tersembunyi, dinyalakan lewat kontrol layer."""
-    fg = folium.FeatureGroup(name=NAMA_LAYER_RTH, show=False)
+    """Titik RTH terverifikasi; ditampilkan hanya saat toggle di atas peta dinyalakan."""
+    fg = folium.FeatureGroup(name=NAMA_LAYER_RTH)
     for _, r in titik.iterrows():
         folium.CircleMarker(
             [r["lat"], r["lon"]], radius=5, color="#FFFFFF", weight=1.5,
@@ -50,6 +50,17 @@ def peta_stasiun(pred_t1: dict[str, float], luas_rth: dict[str, float], key: str
 
     `titik_rth`: titik RTH terverifikasi (kolom lat, lon, nama_rth, jenis_rth, luas_m2, presisi, ...).
     """
+    ada_titik = titik_rth is not None and not titik_rth.empty
+    tampil_titik = False
+    with st.container(key=f"petabar_{key}"):
+        kiri, kanan = st.columns([1.4, 1], vertical_alignment="center")
+        kiri.html('<div class="petaInfo"><span class="material-symbols-rounded">location_on</span>'
+                  '5 SPKU · warna penanda = kategori ISPU prediksi t+1</div>')
+        if ada_titik:
+            with kanan:
+                tampil_titik = st.toggle(f"{NAMA_LAYER_RTH} · {len(titik_rth)} lokasi", key=f"{key}_rth",
+                                         help="Tampilkan taman, hutan kota, dan makam yang lokasinya terverifikasi")
+
     lat = sum(s["lat"] for s in STASIUN.values()) / len(STASIUN)
     lon = sum(s["lon"] for s in STASIUN.values()) / len(STASIUN)
     m = folium.Map(location=[lat, lon], zoom_start=11, tiles=None, control_scale=True, scrollWheelZoom=False)
@@ -82,10 +93,8 @@ def peta_stasiun(pred_t1: dict[str, float], luas_rth: dict[str, float], key: str
             ),
         ).add_to(m)
 
-    ada_titik = titik_rth is not None and not titik_rth.empty
-    if ada_titik:
+    if tampil_titik:
         _layer_rth(titik_rth).add_to(m)
-        folium.LayerControl(position="topright", collapsed=False).add_to(m)
 
     lats = [s["lat"] for s in STASIUN.values()]
     lons = [s["lon"] for s in STASIUN.values()]
@@ -102,7 +111,7 @@ def _legend(n_titik: int) -> None:
     catatan = ""
     if n_titik:
         item.append(f'<span><i class="rth" style="background:{RTH_HIJAU};width:7px;height:7px"></i>'
-                    f'Titik RTH ({n_titik} lokasi, aktifkan lewat kotak "{NAMA_LAYER_RTH}" di kanan atas peta)</span>')
+                    f'{NAMA_LAYER_RTH} ({n_titik} lokasi, nyalakan lewat tombol di atas peta)</span>')
         catatan = ('<div class="note">Hanya RTH yang lokasinya terverifikasi sebagai taman/hutan/makam '
                    'yang ditampilkan.</div>')
     st.html(f'<div class="legend">{"".join(item)}</div>{catatan}')

@@ -129,14 +129,18 @@ st.html(f'<div class="sumberData {kelas}"><span class="dot"></span><b>Sumber dat
 if sumber.peringatan:
     st.html(f'<div class="banner"><span class="dot"></span><span>{escape(sumber.peringatan)}</span></div>')
 
-label("Pilih Stasiun")
-pilihan = st.pills("Pilih Stasiun", daftar_stasiun, default=daftar_stasiun[0],
-                   key="pil_stasiun", label_visibility="collapsed")
+with st.container(key="pemilih"):
+    k_stasiun, k_mode = st.columns([3, 1.15], gap="medium")
+    with k_stasiun:
+        label("Pilih Stasiun", 1)
+        pilihan = st.pills("Pilih Stasiun", daftar_stasiun, default=daftar_stasiun[0],
+                           key="pil_stasiun", label_visibility="collapsed")
+    with k_mode:
+        label("Pilih Mode", 2)
+        mode = st.segmented_control("Mode", [MODE_AKTUAL, MODE_SIMULASI], default=MODE_AKTUAL,
+                                    key="pil_mode", label_visibility="collapsed") or MODE_AKTUAL
 stasiun = pilihan or st.session_state.get("stasiun_terakhir", daftar_stasiun[0])  # pills tidak boleh kosong
 st.session_state["stasiun_terakhir"] = stasiun
-
-mode = st.segmented_control("Mode", [MODE_AKTUAL, MODE_SIMULASI], default=MODE_AKTUAL,
-                            key="pil_mode", label_visibility="collapsed") or MODE_AKTUAL
 
 if mode == MODE_SIMULASI:
     mode_simulasi(stasiun)

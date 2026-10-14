@@ -20,6 +20,14 @@ def svg_mentah(ukuran: int = 64, latar: str = "#FFFFFF", garis: str = "#1C1C1C")
             f'<g fill="none" stroke="{garis}" stroke-width="5" stroke-linecap="round">{_ISI}</g>{titik}</svg>')
 
 
+def hiasan_uri(garis: str = "#1C1C1C") -> str:
+    """Motif hembusan logo tanpa latar (data URI) untuk hiasan latar header/kartu."""
+    titik = "".join(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{garis}" />' for x, y, r in _PARTIKEL)
+    svg = (f'<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">'
+           f'<g fill="none" stroke="{garis}" stroke-width="3" stroke-linecap="round">{_ISI}</g>{titik}</svg>')
+    return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
+
+
 def logo_svg(ukuran: int = 30, latar: str = "#FFFFFF", garis: str = "#1C1C1C", kelas: str = "logo") -> str:
     """Tag <img> berisi SVG (data URI); st.html membuang tag <svg> mentah tetapi mengizinkan gambar."""
     data = base64.b64encode(svg_mentah(ukuran, latar, garis).encode("utf-8")).decode("ascii")
