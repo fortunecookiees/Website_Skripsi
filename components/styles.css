@@ -522,3 +522,35 @@ table.tbl td { transition: background-color .15s ease; }
 .footBrand b { color: var(--ink); }
 .footBrand .logo { border-radius: 4px; }
 .brandText span { font-size: 9.5px; white-space: nowrap; }
+
+/* ================= Admin & sumber data ================= */
+.sumberData {
+  display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--sub);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 100px; padding: 5px 13px; margin: -8px 0 16px;
+}
+.sumberData b { color: var(--ink); font-weight: 600; }
+.sumberData .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.sumberData.srcAdmin .dot { background: var(--ink); box-shadow: 0 0 0 3px rgba(28,28,28,.12); }
+[class*="st-key-card_admin"] .sumberData { margin: 0 0 8px; }
+
+.uHead { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding-bottom: 6px; }
+[class*="st-key-usr_"], [class*="st-key-ver_"] { border-top: 1px solid var(--line-2); padding: 7px 0; transition: background-color .15s ease; }
+[class*="st-key-usr_"]:hover, [class*="st-key-ver_"]:hover { background: #fbfbfa; }
+.uNama { font-size: 12px; font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 6px; }
+.uEmail { font-size: 10.5px; color: var(--muted); word-break: break-all; }
+.uTeks { font-size: 11.5px; color: var(--sub); }
+.uTeks.muted { color: var(--muted); font-style: italic; font-size: 10.5px; }
+.uTag { font-size: 9.5px; font-weight: 700; background: var(--ink); color: #fff; border-radius: 100px; padding: 1px 7px; }
+.uStatus { display: inline-block; font-size: 10px; font-weight: 600; border-radius: 100px; padding: 2px 9px; border: 1px solid var(--line); }
+.uStatus.stOn { background: var(--ink); color: #fff; border-color: var(--ink); }
+.uStatus.stOff { background: var(--surface-2); color: var(--muted); text-decoration: line-through; }
+.uStatus.stWait { background: var(--surface); color: var(--sub); border-style: dashed; }
+[class*="st-key-usr_"] button, [class*="st-key-ver_"] button, .st-key-admin_ke_riset button, .st-key-admin_muat_ulang button,
+.st-key-admin_simpan button {
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); color: var(--sub); min-height: 30px;
+}
+[class*="st-key-usr_"] button p, [class*="st-key-ver_"] button p { font-size: 11.5px; }
+[class*="st-key-del_"] button:hover { border-color: var(--ink); color: var(--ink); background: var(--surface); }
+@media (max-width: 640px) {
+  [class*="st-key-usr_"] [data-testid="stHorizontalBlock"], [class*="st-key-ver_"] [data-testid="stHorizontalBlock"] { gap: 4px; }
+}

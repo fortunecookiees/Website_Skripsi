@@ -1,4 +1,5 @@
 """Sesi akun di st.session_state: klien dari secrets, perpanjangan token, gerbang halaman, blok sidebar."""
+import time
 from dataclasses import replace
 from html import escape
 
@@ -66,6 +67,7 @@ def keluar() -> None:
     if sesi is not None and (k := klien()) is not None:
         k.keluar(sesi.access_token)
     st.session_state.pop("riwayat_unggah", None)  # riwayat milik sesi akun ini
+    st.session_state.pop("akun_menu_admin", None)
     st.session_state[KUNCI_PESAN] = "Anda telah keluar."
 
 
@@ -106,6 +108,60 @@ def blok_sidebar() -> None:
     st.html(f'<div class="akunBox"><div class="avatar">{inisial}</div><div class="akunTeks"><span>Masuk sebagai</span>'
             f'<b>{escape(sesi.nama)}</b><span>{escape(sesi.email)}</span></div></div>')
     st.button("Keluar", key="tombol_keluar", on_click=keluar)
+
+
+KUNCI_MENU_ADMIN = "akun_menu_admin"   # (waktu cek, token, admin?) — HANYA untuk tampilan menu
+JEDA_MENU_ADMIN = 120                   # detik
+
+
+def klien_admin():
+    """(KlienAdmin, bucket) dari secrets, atau (None, pesan). Pesan tidak pernah memuat nilai key."""
+    from auth.admin import KlienAdmin, cek_service_key
+    try:
+        cfg = st.secrets["supabase"]
+        url, key = str(cfg["url"]).strip(), str(cfg.get("service_key", "")).strip()
+        bucket = str(cfg.get("bucket", "data-dashboard")).strip() or "data-dashboard"
+    except Exception:  # noqa: BLE001
+        return None, "Secrets Supabase belum diisi."
+    if (masalah := cek_service_key(key)) is not None:
+        return None, masalah
+    return (KlienAdmin(url, key), bucket), None
+
+
+def verifikasi_admin():
+    """Profil admin hasil pengecekan SERVER (GET /auth/v1/user), atau None. Dipanggil setiap halaman/aksi admin."""
+    sesi = pengguna_aktif()
+    k = klien()
+    if sesi is None or k is None:
+        return None
+    try:
+        p = k.profil(sesi.access_token)
+    except AuthError:
+        return None
+    st.session_state[KUNCI_MENU_ADMIN] = (time.time(), sesi.access_token, p.admin)
+    return p if p.admin else None
+
+
+def admin_untuk_menu() -> bool:
+    """Apakah menu Admin ditampilkan. Di-cache singkat; halaman Admin tetap memeriksa ulang di server."""
+    sesi = pengguna_aktif()
+    if sesi is None:
+        return False
+    simpan = st.session_state.get(KUNCI_MENU_ADMIN)
+    if simpan and simpan[1] == sesi.access_token and time.time() - simpan[0] < JEDA_MENU_ADMIN:
+        return simpan[2]
+    return verifikasi_admin() is not None
+
+
+def wajib_admin(tujuan: str):
+    """Gerbang halaman Admin: harus masuk DAN role admin terverifikasi server; selain itu halaman berhenti."""
+    wajib_masuk(tujuan, "Admin")
+    profil = verifikasi_admin()
+    if profil is None:
+        st.html('<div class="errBox"><b class="h">Akses ditolak</b>Halaman ini hanya untuk akun dengan peran '
+                'admin. Peran diatur oleh pengelola melalui dashboard Supabase.</div>')
+        st.stop()
+    return profil
 
 
 def perbarui_nama(nama: str) -> None:

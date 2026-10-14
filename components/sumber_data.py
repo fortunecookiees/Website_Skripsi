@@ -9,6 +9,7 @@ from core.inference import muat_model, prediksi_7_hari, prediksi_batch
 from core.metrik import bentuk_panjang
 from core.preprocessing import data_evaluasi, kondisi_terakhir, muat_dataset, preprocess
 from core.unggah import buat_template
+from core.versi_data import SumberDashboard, label_sumber, muat_data_dashboard
 
 
 @st.cache_resource(show_spinner="Memuat model…")
@@ -31,15 +32,61 @@ def tanggal_terakhir() -> pd.Timestamp:
     return dataset()["tanggal"].max()
 
 
-@st.cache_data
+# ---------------------------------------------------------------------
+# Data Dashboard (Mode Aktual & titik awal simulasi): versi aktif admin, atau dataset penelitian.
+# Evaluation, Data Historis, dan rentang slider TETAP memakai dataset() penelitian.
+# ---------------------------------------------------------------------
+@st.cache_data(ttl=300, show_spinner="Memuat data dashboard…")
+def _dashboard() -> tuple[pd.DataFrame, SumberDashboard]:
+    from components.akun import klien_admin  # impor lokal: hindari impor melingkar
+    konfigurasi, _ = klien_admin()
+    unduh = None
+    if konfigurasi is not None:
+        klien, bucket = konfigurasi
+        unduh = lambda path: klien.unduh(bucket, path)  # noqa: E731
+    return muat_data_dashboard(unduh, dataset())
+
+
+def sumber_dashboard() -> SumberDashboard:
+    return _dashboard()[1]
+
+
+def kunci_dashboard() -> str:
+    s = sumber_dashboard()
+    return s.versi.id if s.versi else "penelitian"
+
+
+def label_sumber_dashboard() -> str:
+    return label_sumber(sumber_dashboard(), tanggal_terakhir())
+
+
+def tanggal_terakhir_dashboard() -> pd.Timestamp:
+    return _dashboard()[0]["tanggal"].max()
+
+
+@st.cache_data(show_spinner=False)
+def _kondisi(stasiun: str, kunci: str) -> pd.Series:
+    return kondisi_terakhir(_dashboard()[0], stasiun)
+
+
+@st.cache_data(show_spinner=False)
+def _prediksi_aktual(stasiun: str, kunci: str) -> pd.DataFrame:
+    return prediksi_7_hari(model(), _kondisi(stasiun, kunci))
+
+
 def kondisi(stasiun: str) -> pd.Series:
-    return kondisi_terakhir(dataset(), stasiun)
+    """Baris fitur hari terakhir data Dashboard untuk satu stasiun."""
+    return _kondisi(stasiun, kunci_dashboard())
 
 
-@st.cache_data
 def prediksi_aktual(stasiun: str) -> pd.DataFrame:
-    """Prediksi t+1..t+7 dari kondisi terakhir dataset (Mode Prediksi Aktual)."""
-    return prediksi_7_hari(model(), kondisi(stasiun))
+    """Prediksi t+1..t+7 dari kondisi terakhir data Dashboard (Mode Prediksi Aktual)."""
+    return _prediksi_aktual(stasiun, kunci_dashboard())
+
+
+def segarkan_dashboard() -> None:
+    """Dipanggil setelah admin mengganti versi aktif: semua pengguna memuat ulang data Dashboard."""
+    _dashboard.clear()
 
 
 @st.cache_data

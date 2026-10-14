@@ -189,12 +189,25 @@ class Profil:
     nama: str
     dibuat: str | None          # ISO 8601 dari server
     masuk_terakhir: str | None
+    peran: str | None = None    # app_metadata.role — hanya bisa diatur dari dashboard Supabase
+
+    @property
+    def admin(self) -> bool:
+        return self.peran == PERAN_ADMIN
+
+
+PERAN_ADMIN = "admin"
+
+
+def peran_dari(user: dict) -> str | None:
+    return (user.get("app_metadata") or {}).get("role")
 
 
 def _profil_dari(user: dict) -> Profil:
     email = user.get("email", "")
     nama = (user.get("user_metadata") or {}).get("nama") or email.split("@")[0]
-    return Profil(user.get("id", ""), email, nama, user.get("created_at"), user.get("last_sign_in_at"))
+    return Profil(user.get("id", ""), email, nama, user.get("created_at"), user.get("last_sign_in_at"),
+                  peran_dari(user))
 
 
 def _sesi_dari(data: dict) -> Sesi:

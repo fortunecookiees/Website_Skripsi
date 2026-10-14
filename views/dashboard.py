@@ -1,5 +1,6 @@
 """Halaman Dashboard — Mode Prediksi Aktual (L10.1) & Mode Simulasi (L10.2)."""
 import math
+from html import escape
 
 import streamlit as st
 
@@ -68,7 +69,7 @@ def mode_simulasi(stasiun: str) -> None:
     rentang = sd.rentang_fitur()
     aktual = sd.prediksi_aktual(stasiun)
     prefix = f"sim_{stasiun}"
-    kunci_hasil = f"sim_hasil_{stasiun}"  # (nilai slider yang diprediksi, hasil 7 hari)
+    kunci_hasil = f"sim_hasil_{stasiun}_{sd.kunci_dashboard()}"  # (nilai slider yang diprediksi, hasil 7 hari)
 
     banner_simulasi()
     kiri, kanan = st.columns([1.15, 1], gap="medium")
@@ -121,6 +122,12 @@ def mode_simulasi(stasiun: str) -> None:
 
 # --- halaman ------------------------------------------------------------
 judul("Prediksi PM2.5", SUBJUDUL[st.session_state.get("pil_mode") or MODE_AKTUAL])
+sumber = sd.sumber_dashboard()
+kelas = "srcAdmin" if sumber.versi else "srcRiset"
+st.html(f'<div class="sumberData {kelas}"><span class="dot"></span><b>Sumber data:</b> '
+        f'{escape(sd.label_sumber_dashboard())}</div>')
+if sumber.peringatan:
+    st.html(f'<div class="banner"><span class="dot"></span><span>{escape(sumber.peringatan)}</span></div>')
 
 label("Pilih Stasiun")
 pilihan = st.pills("Pilih Stasiun", daftar_stasiun, default=daftar_stasiun[0],

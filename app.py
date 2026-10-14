@@ -9,7 +9,7 @@ import streamlit as st
 from components import akun
 from components.logo import NAMA, TAGLINE, logo_svg
 from components.format import tanggal_panjang, tanggal_pendek
-from components.sumber_data import periode_uji, rentang_tanggal, tanggal_terakhir
+from components.sumber_data import periode_uji, rentang_tanggal, sumber_dashboard, tanggal_terakhir_dashboard
 from components.tema import pasang_css
 
 st.set_page_config(page_title=f"{NAMA} · {TAGLINE}", page_icon=str(Path(__file__).with_name("assets") / "logo.png"),
@@ -17,7 +17,8 @@ st.set_page_config(page_title=f"{NAMA} · {TAGLINE}", page_icon=str(Path(__file_
 pasang_css()
 
 IKON = {"Dashboard": "space_dashboard", "Data Historis": "monitoring", "Evaluation": "fact_check",
-        "Unggah Data": "upload_file", "Information": "info", "Masuk / Daftar": "login", "Profil": "account_circle"}
+        "Unggah Data": "upload_file", "Information": "info", "Masuk / Daftar": "login", "Profil": "account_circle",
+        "Admin": "admin_panel_settings"}
 
 
 def _halaman(path: str, judul_hal: str, **kw) -> st.Page:
@@ -33,8 +34,9 @@ MENU = [
 ]
 HALAMAN_AKUN = _halaman(akun.HALAMAN_AKUN, "Masuk / Daftar", url_path="akun")
 HALAMAN_PROFIL = _halaman("views/profil.py", "Profil", url_path="profil")
+HALAMAN_ADMIN = _halaman("views/admin.py", "Admin", url_path="admin")
 PERLU_MASUK = {"Unggah Data"}
-aktif = st.navigation(MENU + [HALAMAN_AKUN, HALAMAN_PROFIL], position="hidden")
+aktif = st.navigation(MENU + [HALAMAN_AKUN, HALAMAN_PROFIL, HALAMAN_ADMIN], position="hidden")
 
 
 def _catatan_sidebar(judul: str) -> str:
@@ -47,6 +49,8 @@ def _catatan_sidebar(judul: str) -> str:
                 "dataset atau model")
     if judul == "Masuk / Daftar":
         return "Akun hanya diperlukan<br>untuk fitur <b>Unggah Data</b>"
+    if judul == "Admin":
+        return "Khusus peran <b>admin</b><br><br>Data Dashboard saja;<br>Evaluation &amp; Data Historis<br>tetap dataset penelitian"
     if judul == "Profil":
         return "Data akun dikelola<br><b>Supabase Auth</b><br><br>Riwayat unggahan<br>hanya selama sesi"
     if judul == "Data Historis":
@@ -55,14 +59,16 @@ def _catatan_sidebar(judul: str) -> str:
                 "<br><br>5 stasiun SPKU<br>indeks ISPU harian")
     if judul == "Information":
         return "Sumber data<br>Satu Data Jakarta<br>BPS DKI Jakarta<br>Open-Meteo"
-    return (f"Data terakhir<br><b>{tanggal_panjang(tanggal_terakhir())}</b><br><br>"
+    sumber = "data diperbarui admin" if sumber_dashboard().versi else "dataset penelitian"
+    return (f"Data terakhir<br><b>{tanggal_panjang(tanggal_terakhir_dashboard())}</b><br>{sumber}<br><br>"
             "Model XGBoost + PSO<br>7 horizon (t+1 … t+7)")
 
 
 with st.sidebar:
     st.html(f'<div class="brand">{logo_svg(30)}<div class="brandText">{NAMA}<span>{TAGLINE}</span></div></div>')
     sesi = akun.pengguna_aktif()
-    for hal in MENU + [HALAMAN_PROFIL if sesi else HALAMAN_AKUN]:
+    # menu Admin hanya tampilan; halaman Admin sendiri memeriksa ulang role di server
+    for hal in MENU + [HALAMAN_PROFIL if sesi else HALAMAN_AKUN] + ([HALAMAN_ADMIN] if akun.admin_untuk_menu() else []):
         if hal.title == aktif.title:
             st.html(f'<div class="navActive"><span class="material-symbols-rounded">{IKON[hal.title]}</span>'
                     f'{hal.title}</div>')
