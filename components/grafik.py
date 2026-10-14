@@ -5,7 +5,7 @@ import streamlit as st
 
 from core.config import kategori_ispu
 
-from .format import tanggal_pendek
+from .format import BULAN, tanggal_pendek
 
 INK, MUTED, LINE = "#1C1C1C", "#8C8C8C", "#EFEFEF"
 # ambang kategori: (nilai, warna garis, warna teks)
@@ -79,5 +79,75 @@ def grafik_sekitar_acuan(aktual: pd.DataFrame, acuan: pd.Timestamp, prediksi: pd
                    tickvals=list(aktual["tanggal"])[::2], ticktext=[tanggal_pendek(t) for t in list(aktual["tanggal"])[::2]]),
         yaxis=dict(range=[max(0, min(semua) - 10), max(semua) + 10], showgrid=True, gridcolor=LINE,
                    zeroline=False, fixedrange=True, nticks=5),
+    )
+    st.plotly_chart(fig, key=key, config={"displayModeBar": False}, width="stretch")
+
+
+# stasiun dibedakan dengan nada abu-abu + pola garis (warna hanya untuk kategori ISPU)
+GAYA_STASIUN = [("#1C1C1C", "solid"), ("#7A7A7A", "solid"), ("#1C1C1C", "dot"),
+                ("#A8A8A8", "solid"), ("#5B5B5B", "dash")]
+
+
+def grafik_historis(data: pd.DataFrame, stasiun: list[str], key: str, tinggi: int = 320) -> None:
+    """Tren PM2.5 beberapa stasiun. `data`: kolom tanggal, stasiun, pm25, n_hari (hasil core.historis.agregasi)."""
+    from core.config import STASIUN
+    fig = go.Figure()
+    for i, s in enumerate([s for s in STASIUN if s in stasiun]):
+        d = data[data["stasiun"] == s]
+        warna, pola = GAYA_STASIUN[i % len(GAYA_STASIUN)]
+        hover = [f"<b>{s.split()[0]}</b> · {tanggal_pendek(t, tahun=True)}<br>{v:.0f} ISPU · {kategori_ispu(v)['kategori']}"
+                 + (f"<br>rata-rata {n} hari" if n > 1 else "")
+                 for t, v, n in zip(d["tanggal"], d["pm25"], d["n_hari"])]
+        fig.add_trace(go.Scatter(x=d["tanggal"], y=d["pm25"], name=s.split()[0] + " " + " ".join(s.split()[1:]),
+                                 mode="lines+markers" if len(d) <= 60 else "lines",
+                                 line=dict(color=warna, width=1.8, dash=pola), marker=dict(size=5, color=warna),
+                                 hovertext=hover, hoverinfo="text"))
+    y_max = max(110, float(data["pm25"].max()) * 1.1) if not data.empty else 110
+    for batas, warna, teks in AMBANG:
+        if batas <= y_max:
+            fig.add_hline(y=batas, line=dict(color=warna, width=1, dash="dash"),
+                          annotation_text=f"ISPU {batas}", annotation_position="top right",
+                          annotation_font=dict(size=9, color=teks), annotation_bgcolor="rgba(255,255,255,.85)")
+    # label sumbu-x berbahasa Indonesia (plotly memakai nama bulan Inggris)
+    tgl = pd.Series(sorted(data["tanggal"].unique()))
+    if len(tgl):
+        idx = sorted({round(i * (len(tgl) - 1) / 5) for i in range(6)})
+        rentang_hari = (tgl.iloc[-1] - tgl.iloc[0]).days
+        teks_x = [(f"{BULAN[t.month - 1][:3]} {t.year}" if rentang_hari > 200 else tanggal_pendek(t))
+                  for t in tgl.iloc[idx]]
+        fig.update_xaxes(tickvals=list(tgl.iloc[idx]), ticktext=teks_x)
+    fig.update_layout(
+        height=tinggi, margin=dict(l=8, r=8, t=10, b=6),
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="Inter, Arial, sans-serif", size=10, color=MUTED),
+        hoverlabel=dict(bgcolor="#FFFFFF", bordercolor="#DEDEDE", font=dict(color=INK, size=11)),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0, font=dict(size=10.5, color="#5B5B5B")),
+        xaxis=dict(showgrid=False, zeroline=False, fixedrange=False),
+        yaxis=dict(range=[0, y_max], showgrid=True, gridcolor=LINE, zeroline=False, fixedrange=True, nticks=6),
+        hovermode="closest",
+    )
+    st.plotly_chart(fig, key=key, config={"displayModeBar": False}, width="stretch")
+
+
+def grafik_distribusi(tab: pd.DataFrame, key: str) -> None:
+    """Batang bertumpuk persentase hari per kategori ISPU per stasiun (warna kategori ISPU)."""
+    from core.config import KATEGORI_ISPU
+    fig = go.Figure()
+    label = [s.split()[0] for s in tab.index]
+    for _, nama, rentang, warna, *_ in KATEGORI_ISPU:
+        if nama not in tab.columns or not tab[nama].any():
+            continue
+        fig.add_trace(go.Bar(y=label, x=tab[nama], name=nama, orientation="h", marker=dict(color=warna),
+                             hovertemplate=f"<b>%{{y}}</b> · {nama} ({rentang})<br>%{{x:.1f}}% hari<extra></extra>",
+                             text=[f"{v:.0f}%" if v >= 8 else "" for v in tab[nama]], textposition="inside",
+                             insidetextfont=dict(color="#FFFFFF", size=10)))
+    fig.update_layout(
+        barmode="stack", height=80 + 38 * len(tab), margin=dict(l=8, r=8, t=34, b=6),
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", bargap=0.35,
+        font=dict(family="Inter, Arial, sans-serif", size=10.5, color="#5B5B5B"),
+        hoverlabel=dict(bgcolor="#FFFFFF", bordercolor="#DEDEDE", font=dict(color=INK, size=11)),
+        legend=dict(orientation="h", yanchor="bottom", y=1.0, x=0, font=dict(size=10), traceorder="normal"),
+        xaxis=dict(range=[0, 100], showgrid=True, gridcolor=LINE, ticksuffix="%", fixedrange=True, zeroline=False),
+        yaxis=dict(autorange="reversed", fixedrange=True),
     )
     st.plotly_chart(fig, key=key, config={"displayModeBar": False}, width="stretch")

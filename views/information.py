@@ -3,6 +3,7 @@ import streamlit as st
 
 from components import sumber_data as sd
 from components.format import angka, tanggal_panjang
+from components.logo import NAMA
 from components.tema import judul
 from core.config import (EARLY_STOPPING, FITUR, FITUR_METEOROLOGI, FITUR_POLUTAN, FITUR_SPASIAL, FITUR_TURUNAN,
                          HORIZONS, KATEGORI_ISPU, LABEL_FITUR, N_ESTIMATORS_MAKS, N_EVALUASI_OPTIMASI, N_ITERASI,
@@ -38,7 +39,7 @@ def _nilai_param(nama: str, v: float) -> str:
 
 def tentang() -> None:
     mulai, akhir = sd.rentang_tanggal()
-    _bagian("Tentang Aplikasi", "<p>Aplikasi menampilkan prediksi indeks ISPU PM2.5 satu sampai tujuh hari ke depan "
+    _bagian("Tentang Aplikasi", f"<p><b>{NAMA}</b> menampilkan prediksi indeks ISPU PM2.5 satu sampai tujuh hari ke depan "
             f"pada {len(STASIUN)} stasiun pemantauan kualitas udara DKI Jakarta. Prediksi dihasilkan oleh model XGBoost "
             "yang <i>hyperparameter</i>-nya dioptimasi menggunakan Particle Swarm Optimization, lalu dibandingkan "
             "dengan <i>hyperparameter</i> bawaan dan <i>hyperparameter</i> hasil Random Search.</p>")
@@ -133,12 +134,18 @@ def panduan() -> None:
     _bagian("Panduan Penggunaan", """<ol>
         <li>Buka halaman <b>Dashboard</b> dan pilih stasiun. <b>Mode Aktual</b> menampilkan prediksi 7 hari ke depan
             dari kondisi terakhir dataset, ringkasan kelima stasiun, dan peta lokasi.</li>
-        <li>Pilih <b>Mode Simulasi</b> untuk menggeser nilai variabel spasial, meteorologi, dan polutan, lalu
-            bandingkan hasilnya dengan mode aktual. Hasil simulasi bukan prediksi kondisi sebenarnya. Tombol
-            <i>Kembalikan ke nilai aktual</i> mengembalikan semua nilai.</li>
-        <li>Buka halaman <b>Evaluation</b>, pilih stasiun dan tanggal acuan pada periode uji untuk membandingkan
-            prediksi dengan nilai aktual. Bagian bawah halaman menampilkan metrik seluruh data uji, perbandingan
-            metode optimasi, kontribusi variabel, dan pengaruh variabel spasial.</li>
+        <li>Pilih <b>Mode Simulasi</b>, geser nilai variabel spasial, meteorologi, dan polutan, lalu klik
+            <b>Prediksi</b> untuk membandingkan hasilnya dengan mode aktual. Hasil simulasi bukan prediksi kondisi
+            sebenarnya. Tombol <i>Kembalikan ke nilai aktual</i> mengisi semua slider dengan kondisi terakhir.</li>
+        <li>Buka halaman <b>Data Historis</b> untuk menjelajahi PM2.5 harian dataset: saring stasiun, rentang
+            tanggal, dan kategori ISPU, ubah tampilan harian/mingguan/bulanan, lalu unduh data terfilter.</li>
+        <li>Buka halaman <b>Evaluation</b>, pilih stasiun dan tanggal acuan pada periode uji, lalu klik
+            <b>Prediksi</b> untuk membandingkan prediksi dengan nilai aktual. Bagian <i>Jelajahi Prediksi Data
+            Uji</i> menyaring seluruh prediksi periode uji; bagian bawah menampilkan metrik seluruh data uji,
+            perbandingan metode optimasi, kontribusi variabel, dan pengaruh variabel spasial.</li>
+        <li>Masuk atau daftar akun untuk memakai <b>Unggah Data</b>: unduh template, isi data harian terbaru, lalu
+            unggah untuk mendapat prediksi 7 hari; file minimal 11 hari juga membuka tab <i>Validasi</i>. Halaman
+            <b>Profil</b> menampilkan info akun, ubah nama, ganti password, dan riwayat unggahan selama sesi.</li>
     </ol>""")
 
 

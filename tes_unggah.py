@@ -7,9 +7,10 @@ import re
 import numpy as np
 import pandas as pd
 
-from core.config import FITUR
-from core.inference import muat_model, prediksi_7_hari
-from core.preprocessing import kondisi_terakhir, muat_dataset, preprocess
+from core.config import FITUR, HORIZONS
+from core.inference import muat_model, prediksi_7_hari, prediksi_batch
+from core.metrik import metrik_acuan, ringkasan_horizon
+from core.preprocessing import data_evaluasi, kondisi_terakhir, muat_dataset, preprocess
 from core.unggah import baca_file, buat_template, hasil_ke_csv, proses
 
 models = muat_model()
@@ -89,5 +90,60 @@ cek("peringatan: suhu di luar rentang", h.ok and "di luar rentang" in teks(h.per
 # 13. pm25 kosong di luar 4 hari terakhir -> diisi ffill, tetap valid
 h = jalankan(contoh().assign(pm25=lambda d: d["pm25"].where(d.index != 0, np.nan)))
 cek("pm25 kosong di hari awal (di luar 4 hari terakhir) tetap valid", h.ok, teks(h.error))
+
+# 14–20. Tab Validasi
+KOLOM_FILE = contoh().columns.tolist()
+
+
+def potong(stasiun: str, mulai, n: int) -> pd.DataFrame:
+    d = mentah[(mentah["stasiun"] == stasiun) & (mentah["tanggal"] >= pd.Timestamp(mulai))]
+    d = d.sort_values("tanggal").head(n)[KOLOM_FILE].reset_index(drop=True)
+    d["tanggal"] = d["tanggal"].dt.strftime("%Y-%m-%d")
+    return d
+
+
+h = jalankan(contoh(n=10))
+cek("validasi: 10 hari -> belum ada tanggal acuan", h.ok and h.validasi.empty and h.hari == {"DKI3 Jagakarsa": 10})
+h = jalankan(contoh(n=11))
+cek("validasi: 11 hari -> tepat 1 tanggal acuan", h.ok and len(h.validasi) == 1,
+    f"{len(h.validasi)} tanggal" if h.ok else teks(h.error))
+
+# prediksi & aktual dari file = halaman Evaluation pada tanggal yang sama (data uji 2025)
+uji, batas = data_evaluasi(dataset)
+uji = pd.concat([uji, prediksi_batch(models, uji)], axis=1)
+kol = [f"pred_h{k}" for k in HORIZONS] + [f"target_h{k}" for k in HORIZONS] + [f"target_h{k}_asli" for k in HORIZONS]
+for st_nama in ["DKI1 Bundaran HI", "DKI4 Lubang Buaya"]:
+    h = jalankan(potong(st_nama, batas - pd.Timedelta(days=3), 40))
+    a = h.validasi.set_index("tanggal")
+    b = uji[uji["stasiun"] == st_nama].set_index("tanggal")
+    sama = a.index.intersection(b.index)
+    cocok = len(sama) >= 25 and np.allclose(a.loc[sama, kol].astype(float), b.loc[sama, kol].astype(float))
+    cek(f"validasi {st_nama.split()[0]}: prediksi & aktual = Evaluation", h.ok and cocok,
+        f"{len(a)} tanggal acuan, {len(sama)} beririsan dengan data uji")
+
+# meteorologi kosong di tengah file -> tanggal acuan itu dilewati & dihitung
+d = potong("DKI1 Bundaran HI", batas, 15)
+h_utuh = jalankan(d)
+d.loc[5, "kelembapan_pct"] = np.nan
+h = jalankan(d)
+tgl_kosong = pd.Timestamp(d.loc[5, "tanggal"])
+cek("validasi: meteorologi kosong -> tanggal acuan dilewati",
+    h.ok and len(h.validasi) == len(h_utuh.validasi) - 1 and tgl_kosong not in set(h.validasi["tanggal"])
+    and h.dilewati_meteo == {"DKI1 Bundaran HI": 1}, f"dilewati={h.dilewati_meteo}")
+
+# PM2.5 aktual kosong -> ditandai data diisi, tidak masuk metrik
+d = potong("DKI1 Bundaran HI", batas, 11)
+d.loc[6, "pm25"] = np.nan  # = target t+3 dari satu-satunya tanggal acuan (indeks 3); 4 hari terakhir wajib terisi
+h = jalankan(d)
+b = h.validasi.iloc[0]
+m = metrik_acuan(b)
+asli = [k for k in HORIZONS if b[f"target_h{k}_asli"]]
+galat = np.array([b[f"pred_h{k}"] - b[f"target_h{k}"] for k in asli])
+cek("validasi: aktual kosong ditandai data diisi & dilewati metrik",
+    h.ok and not b["target_h3_asli"] and m["n"] == 6 and np.isclose(m["MAE"], np.abs(galat).mean())
+    and np.isclose(m["RMSE"], np.sqrt((galat ** 2).mean())), f"n={m['n']} asli={asli}")
+r = ringkasan_horizon(h.validasi)
+cek("ringkasan: n per horizon melewati data diisi", r.loc[r["horizon"] == 3, "n"].item() == 0
+    and r.loc[r["horizon"] != 3, "n"].eq(1).all() and r["MAE"].isna().sum() == 1, r[["horizon", "n"]].to_string())
 
 print(f"\n{lulus} lulus, {gagal} gagal")

@@ -1,4 +1,6 @@
 """Halaman Dashboard — Mode Prediksi Aktual (L10.1) & Mode Simulasi (L10.2)."""
+import math
+
 import streamlit as st
 
 from components import sumber_data as sd
@@ -50,11 +52,23 @@ def mode_aktual(stasiun: str) -> None:
         peta_stasiun(pred_t1, luas_rth, key="peta_aktual", titik_rth=sd.titik_rth())
 
 
+def _sama(a: dict, b: dict) -> bool:
+    """Bandingkan nilai slider; NaN (data tidak tersedia) dianggap sama dengan NaN."""
+    return a.keys() == b.keys() and all(
+        (math.isnan(a[k]) and math.isnan(b[k])) or a[k] == b[k] for k in a)
+
+
+def _kembalikan(baris, rentang, prefix: str, kunci_hasil: str) -> None:
+    reset_slider(baris, rentang, prefix)
+    st.session_state.pop(kunci_hasil, None)
+
+
 def mode_simulasi(stasiun: str) -> None:
     baris = sd.kondisi(stasiun)
     rentang = sd.rentang_fitur()
     aktual = sd.prediksi_aktual(stasiun)
     prefix = f"sim_{stasiun}"
+    kunci_hasil = f"sim_hasil_{stasiun}"  # (nilai slider yang diprediksi, hasil 7 hari)
 
     banner_simulasi()
     kiri, kanan = st.columns([1.15, 1], gap="medium")
@@ -62,21 +76,39 @@ def mode_simulasi(stasiun: str) -> None:
         with st.container(key="card_variabel"):
             st.html(judul_kartu("Atur Nilai Variabel", "dapat digeser"))
             nilai = panel_variabel(baris, rentang, terkunci=False, prefix=prefix)
-            st.button("Kembalikan ke nilai aktual", on_click=reset_slider,
-                      args=(baris, rentang, prefix), key="reset_simulasi")
+            c_prediksi, c_reset = st.columns([1, 1.6])
+            klik = c_prediksi.button("Prediksi", type="primary", key="prediksi_simulasi", width="stretch")
+            c_reset.button("Kembalikan ke nilai aktual", on_click=_kembalikan,
+                           args=(baris, rentang, prefix, kunci_hasil), key="reset_simulasi")
 
-    # fitur turunan & tanggal tetap dari kondisi aktual; hanya 15 fitur slider yang diganti
-    fitur_sim = baris.copy()
-    for f, v in nilai.items():
-        fitur_sim[f] = v
-    simulasi = prediksi_7_hari(sd.model(), fitur_sim)
+    # model hanya dijalankan saat tombol Prediksi diklik; menggeser slider tidak memicu prediksi
+    if klik:
+        # fitur turunan & tanggal tetap dari kondisi aktual; hanya 15 fitur slider yang diganti
+        fitur_sim = baris.copy()
+        for f, v in nilai.items():
+            fitur_sim[f] = v
+        with st.spinner("Menghitung prediksi…"):
+            st.session_state[kunci_hasil] = (dict(nilai), prediksi_7_hari(sd.model(), fitur_sim))
+
+    if kunci_hasil not in st.session_state:
+        with kanan, st.container(key="card_prediksi"):
+            st.html(judul_kartu("Hasil Simulasi", "belum dihitung")
+                    + '<div class="simKosong">Slider dimulai dari nilai terendah pada dataset. Geser nilai variabel '
+                    'di panel kiri, lalu klik <b>Prediksi</b> untuk melihat hasil simulasi 7 hari ke depan dan '
+                    'perbandingannya dengan mode aktual. Tombol <i>Kembalikan ke nilai aktual</i> mengisi semua '
+                    'slider dengan kondisi terakhir.</div>')
+        return
+
+    nilai_dipakai, simulasi = st.session_state[kunci_hasil]
     t1 = simulasi.iloc[0]
-
     with kanan:
+        if not _sama(nilai, nilai_dipakai):
+            st.html('<div class="banner"><span class="dot"></span><span>Nilai variabel sudah diubah sejak '
+                    'prediksi terakhir. Klik <b>Prediksi</b> untuk memperbarui hasil di bawah.</span></div>')
         with st.container(key="card_prediksi"):
             st.html(judul_kartu("Hasil Simulasi", tanggal_panjang(t1["tanggal"]))
                     + angka_besar(t1["pm25"]) + chip(t1["pm25"])
-                    + f'<div class="meta">{teks_simulasi(t1["pm25"], aktual["pm25"].iloc[0], daftar_perubahan(baris, nilai))}</div>')
+                    + f'<div class="meta">{teks_simulasi(t1["pm25"], aktual["pm25"].iloc[0], daftar_perubahan(baris, nilai_dipakai))}</div>')
             grafik_7_hari(simulasi, key="grafik_simulasi")
             st.html(f'<div class="note">{teks_bandingkan(aktual, simulasi)}</div>')
         with st.container(key="card_banding"):

@@ -7,6 +7,7 @@ Aplikasi web Streamlit untuk menampilkan prediksi ISPU PM2.5 di 5 SPKU DKI Jakar
 ```
 models/model_pm25_h1.pkl ... model_pm25_h7.pkl   # dict: {'model', 'scaler', 'fitur', 'horizon'}
 models/hasil_evaluasi.json                       # metrik uji: default, random_search, pso, persistence (key "1".."7"), best_pso, best_rs
+models/hasil_skenario.json                       # RMSE uji skenario S1/S2/S3 + uji DM S1 vs S3 (output Colab train/training.py bagian 10)
 data/datasetskripsi.xlsx                         # dataset terpadu 3.275 baris (5 stasiun × 655 hari, 24 Jan 2024 – 8 Nov 2025)
 train/training.py                                # kode training asli (ACUAN preprocessing, jangan diubah)
 ```
@@ -80,7 +81,7 @@ Warna **hanya** dipakai untuk kategori ISPU. Elemen lain pakai warna netral.
 - Rincian 21 variabel + penjelasan variabel spasial
 - Tabel kategori ISPU
 - Panduan penggunaan aplikasi
-- Info penyusun: Fortuna, NIM 535230144, Teknik Informatika, Universitas Tarumanagara (pembimbing: [isi nanti])
+- Info penyusun: Fortuna, NIM 535230144, Teknik Informatika, Universitas Tarumanagara (pembimbing: Pak Tony · Pak Manatap)
 
 ## Aturan kerja
 

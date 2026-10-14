@@ -1,4 +1,5 @@
 """Sesi akun di st.session_state: klien dari secrets, perpanjangan token, gerbang halaman, blok sidebar."""
+from dataclasses import replace
 from html import escape
 
 import streamlit as st
@@ -64,6 +65,7 @@ def keluar() -> None:
     sesi: Sesi | None = st.session_state.pop(KUNCI_SESI, None)
     if sesi is not None and (k := klien()) is not None:
         k.keluar(sesi.access_token)
+    st.session_state.pop("riwayat_unggah", None)  # riwayat milik sesi akun ini
     st.session_state[KUNCI_PESAN] = "Anda telah keluar."
 
 
@@ -81,7 +83,7 @@ def wajib_masuk(tujuan: str, nama_fitur: str) -> Sesi:
     with st.container(key="card_ajakan_masuk"):
         st.html('<div class="cardTitle">Perlu masuk <em>akun</em></div>'
                 f'<div class="langkah">Fitur <b>{nama_fitur}</b> hanya tersedia untuk pengguna yang sudah masuk. '
-                'Halaman Dashboard, Evaluation, dan Information tetap dapat dibuka tanpa akun.</div>')
+                'Halaman Dashboard, Data Historis, Evaluation, dan Information tetap dapat dibuka tanpa akun.</div>')
         if masalah:
             st.html(f'<div class="note">{masalah}</div>')
         else:
@@ -100,5 +102,14 @@ def blok_sidebar() -> None:
     sesi = pengguna_aktif()
     if sesi is None:
         return
-    st.html(f'<div class="akunBox"><span>Masuk sebagai</span><b>{escape(sesi.nama)}</b><span>{escape(sesi.email)}</span></div>')
+    inisial = escape((sesi.nama.strip()[:1] or "?").upper())
+    st.html(f'<div class="akunBox"><div class="avatar">{inisial}</div><div class="akunTeks"><span>Masuk sebagai</span>'
+            f'<b>{escape(sesi.nama)}</b><span>{escape(sesi.email)}</span></div></div>')
     st.button("Keluar", key="tombol_keluar", on_click=keluar)
+
+
+def perbarui_nama(nama: str) -> None:
+    """Ganti nama di sesi lokal setelah berhasil diubah di server."""
+    sesi = st.session_state.get(KUNCI_SESI)
+    if sesi is not None:
+        st.session_state[KUNCI_SESI] = replace(sesi, nama=nama)

@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 import requests
 
 PASSWORD_MIN = 6
+NAMA_MAKS = 60
 _POLA_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 PESAN_ERROR = {
@@ -30,6 +31,9 @@ PESAN_ERROR = {
     "refresh_token_already_used": "Sesi berakhir. Silakan masuk kembali.",
     "session_not_found": "Sesi berakhir. Silakan masuk kembali.",
     "session_expired": "Sesi berakhir. Silakan masuk kembali.",
+    "same_password": "Password baru harus berbeda dari password lama.",
+    "reauthentication_needed": "Demi keamanan, keluar lalu masuk kembali sebelum mengganti password.",
+    "bad_jwt": "Sesi berakhir. Silakan masuk kembali.",
 }
 PESAN_UMUM = "Terjadi kesalahan pada server autentikasi. Coba lagi nanti."
 PESAN_JARINGAN = "Tidak dapat terhubung ke server autentikasi. Periksa koneksi internet lalu coba lagi."
@@ -72,6 +76,28 @@ def validasi_daftar(nama: str, email: str, password: str, konfirmasi: str) -> li
     return error
 
 
+def validasi_nama(nama: str) -> list[str]:
+    nama = nama.strip()
+    if not nama:
+        return ["Nama wajib diisi."]
+    if len(nama) > NAMA_MAKS:
+        return [f"Nama maksimal {NAMA_MAKS} karakter."]
+    return []
+
+
+def validasi_ganti_password(lama: str, baru: str, konfirmasi: str) -> list[str]:
+    error = []
+    if not lama:
+        error.append("Password lama wajib diisi.")
+    if len(baru) < PASSWORD_MIN:
+        error.append(f"Password baru minimal {PASSWORD_MIN} karakter.")
+    elif baru == lama:
+        error.append("Password baru harus berbeda dari password lama.")
+    if baru != konfirmasi:
+        error.append("Konfirmasi password baru tidak cocok.")
+    return error
+
+
 def validasi_masuk(email: str, password: str) -> list[str]:
     error = []
     if not _POLA_EMAIL.match(email.strip()):
@@ -108,14 +134,21 @@ class KlienAuth:
             h["Authorization"] = f"Bearer {token}"
         return h
 
-    def _post(self, jalur: str, data: dict | None = None, token: str | None = None) -> dict:
+    def _minta(self, metode: str, jalur: str, data: dict | None = None, token: str | None = None) -> dict:
+        kirim = getattr(self.http, metode)
+        opsi = {"headers": self._header(token), "timeout": self.timeout}
+        if metode != "get":
+            opsi["json"] = data or {}
         try:
-            r = self.http.post(f"{self.url}{jalur}", json=data or {}, headers=self._header(token), timeout=self.timeout)
+            r = kirim(f"{self.url}{jalur}", **opsi)
         except requests.RequestException as e:
             raise AuthError(PESAN_JARINGAN, "jaringan") from e
         if r.status_code >= 400:
             raise _error_dari(r)
         return r.json() if r.content else {}
+
+    def _post(self, jalur: str, data: dict | None = None, token: str | None = None) -> dict:
+        return self._minta("post", jalur, data, token)
 
     def daftar(self, nama: str, email: str, password: str) -> "Sesi | None":
         """Buat akun. Mengembalikan Sesi jika langsung aktif, None jika perlu konfirmasi email."""
@@ -137,6 +170,31 @@ class KlienAuth:
             self._post("/logout", token=access_token)
         except AuthError:
             pass
+
+    def profil(self, access_token: str) -> "Profil":
+        """Data akun dari server (nama, email, tanggal daftar, masuk terakhir)."""
+        return _profil_dari(self._minta("get", "/user", token=access_token))
+
+    def ubah_nama(self, access_token: str, nama: str) -> "Profil":
+        return _profil_dari(self._minta("put", "/user", {"data": {"nama": nama.strip()}}, access_token))
+
+    def ganti_password(self, access_token: str, password_baru: str) -> None:
+        self._minta("put", "/user", {"password": password_baru}, access_token)
+
+
+@dataclass
+class Profil:
+    id: str
+    email: str
+    nama: str
+    dibuat: str | None          # ISO 8601 dari server
+    masuk_terakhir: str | None
+
+
+def _profil_dari(user: dict) -> Profil:
+    email = user.get("email", "")
+    nama = (user.get("user_metadata") or {}).get("nama") or email.split("@")[0]
+    return Profil(user.get("id", ""), email, nama, user.get("created_at"), user.get("last_sign_in_at"))
 
 
 def _sesi_dari(data: dict) -> Sesi:

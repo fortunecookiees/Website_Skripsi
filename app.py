@@ -1,27 +1,40 @@
-"""Entry point aplikasi Prediksi PM2.5 DKI Jakarta.
+"""Entry point aplikasi NafasKota — Prediksi PM2.5 DKI Jakarta.
 
 Jalankan:  streamlit run app.py
 """
+from pathlib import Path
+
 import streamlit as st
 
 from components import akun
+from components.logo import NAMA, TAGLINE, logo_svg
 from components.format import tanggal_panjang, tanggal_pendek
-from components.sumber_data import periode_uji, tanggal_terakhir
+from components.sumber_data import periode_uji, rentang_tanggal, tanggal_terakhir
 from components.tema import pasang_css
 
-st.set_page_config(page_title="Prediksi PM2.5 DKI Jakarta", page_icon="🌫️",
-                   layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title=f"{NAMA} · {TAGLINE}", page_icon=str(Path(__file__).with_name("assets") / "logo.png"),
+                   layout="wide", initial_sidebar_state="auto")  # auto: terbuka di desktop, tertutup di HP
 pasang_css()
 
+IKON = {"Dashboard": "space_dashboard", "Data Historis": "monitoring", "Evaluation": "fact_check",
+        "Unggah Data": "upload_file", "Information": "info", "Masuk / Daftar": "login", "Profil": "account_circle"}
+
+
+def _halaman(path: str, judul_hal: str, **kw) -> st.Page:
+    return st.Page(path, title=judul_hal, icon=f":material/{IKON[judul_hal]}:", **kw)
+
+
 MENU = [
-    st.Page("views/dashboard.py", title="Dashboard", default=True),
-    st.Page("views/evaluation.py", title="Evaluation", url_path="evaluation"),
-    st.Page("views/unggah.py", title="Unggah Data", url_path="unggah"),
-    st.Page("views/information.py", title="Information", url_path="information"),
+    _halaman("views/dashboard.py", "Dashboard", default=True),
+    _halaman("views/historis.py", "Data Historis", url_path="historis"),
+    _halaman("views/evaluation.py", "Evaluation", url_path="evaluation"),
+    _halaman("views/unggah.py", "Unggah Data", url_path="unggah"),
+    _halaman("views/information.py", "Information", url_path="information"),
 ]
-HALAMAN_AKUN = st.Page(akun.HALAMAN_AKUN, title="Masuk / Daftar", url_path="akun")
+HALAMAN_AKUN = _halaman(akun.HALAMAN_AKUN, "Masuk / Daftar", url_path="akun")
+HALAMAN_PROFIL = _halaman("views/profil.py", "Profil", url_path="profil")
 PERLU_MASUK = {"Unggah Data"}
-aktif = st.navigation(MENU + [HALAMAN_AKUN], position="hidden")
+aktif = st.navigation(MENU + [HALAMAN_AKUN, HALAMAN_PROFIL], position="hidden")
 
 
 def _catatan_sidebar(judul: str) -> str:
@@ -34,6 +47,12 @@ def _catatan_sidebar(judul: str) -> str:
                 "dataset atau model")
     if judul == "Masuk / Daftar":
         return "Akun hanya diperlukan<br>untuk fitur <b>Unggah Data</b>"
+    if judul == "Profil":
+        return "Data akun dikelola<br><b>Supabase Auth</b><br><br>Riwayat unggahan<br>hanya selama sesi"
+    if judul == "Data Historis":
+        mulai, akhir = rentang_tanggal()
+        return (f"Rentang dataset<br><b>{tanggal_pendek(mulai, tahun=True)} – {tanggal_pendek(akhir, tahun=True)}</b>"
+                "<br><br>5 stasiun SPKU<br>indeks ISPU harian")
     if judul == "Information":
         return "Sumber data<br>Satu Data Jakarta<br>BPS DKI Jakarta<br>Open-Meteo"
     return (f"Data terakhir<br><b>{tanggal_panjang(tanggal_terakhir())}</b><br><br>"
@@ -41,14 +60,14 @@ def _catatan_sidebar(judul: str) -> str:
 
 
 with st.sidebar:
-    st.html('<div class="brand"><div class="brandMark"></div>'
-            '<div class="brandText">Prediksi PM2.5<span>DKI Jakarta</span></div></div>')
+    st.html(f'<div class="brand">{logo_svg(30)}<div class="brandText">{NAMA}<span>{TAGLINE}</span></div></div>')
     sesi = akun.pengguna_aktif()
-    for hal in MENU + ([] if sesi else [HALAMAN_AKUN]):
+    for hal in MENU + [HALAMAN_PROFIL if sesi else HALAMAN_AKUN]:
         if hal.title == aktif.title:
-            st.html(f'<div class="navActive">{hal.title}</div>')
+            st.html(f'<div class="navActive"><span class="material-symbols-rounded">{IKON[hal.title]}</span>'
+                    f'{hal.title}</div>')
         else:
-            st.page_link(hal, label=hal.title)
+            st.page_link(hal, label=hal.title, icon=hal.icon)
         if hal.title in PERLU_MASUK and sesi is None:
             st.html('<div class="navNote">perlu masuk</div>')
     st.html(f'<div class="sideFoot">{_catatan_sidebar(aktif.title)}</div>')
@@ -58,3 +77,7 @@ if pesan := st.session_state.pop(akun.KUNCI_PESAN, None):
     st.toast(pesan)
 
 aktif.run()
+
+st.html(f'<div class="footer"><span class="footBrand">{logo_svg(16, latar="#1C1C1C", garis="#FFFFFF")}<b>{NAMA}</b> · {TAGLINE}</span>'
+        '<span>XGBoost + PSO · 5 SPKU · t+1 … t+7</span>'
+        '<span>Fortuna · 535230144 · Teknik Informatika, Universitas Tarumanagara</span></div>')

@@ -12,13 +12,15 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from .config import FITUR, FITUR_METEOROLOGI, FITUR_POLUTAN, FITUR_SPASIAL, LABEL_FITUR, STASIUN, kategori_ispu
-from .inference import prediksi_7_hari
-from .preprocessing import kondisi_terakhir, preprocess
+from .config import (FITUR, FITUR_METEOROLOGI, FITUR_POLUTAN, FITUR_SPASIAL, HORIZONS, LABEL_FITUR, STASIUN,
+                     kategori_ispu)
+from .inference import prediksi_7_hari, prediksi_batch
+from .preprocessing import KOLOM_LAG, KOLOM_TARGET, kondisi_terakhir, preprocess
 
 KOLOM_WAJIB = ["tanggal", "stasiun"] + FITUR_POLUTAN + FITUR_METEOROLOGI
 KOLOM_ANGKA = FITUR_POLUTAN + FITUR_METEOROLOGI
 MIN_HARI = 4            # hari t + 3 hari sebelumnya (lag 1–3 & rata-rata 3 hari)
+MIN_HARI_VALIDASI = MIN_HARI + len(HORIZONS)  # + 7 hari nilai aktual t+1..t+7 = 11
 MAKS_PESAN = 8          # batas pesan sejenis yang ditampilkan
 _POLA_TANGGAL = re.compile(r"^\d{4}-\d{2}-\d{2}( 00:00(:00)?)?$")
 
@@ -30,6 +32,10 @@ class HasilUnggah:
     info: list[str] = field(default_factory=list)
     kondisi: dict[str, pd.Series] = field(default_factory=dict)   # stasiun -> baris fitur hari terakhir
     prediksi: pd.DataFrame | None = None                          # stasiun, tanggal_dasar, tanggal, horizon, pm25, kategori
+    data: pd.DataFrame | None = None        # data unggahan setelah preprocessing (untuk grafik validasi)
+    validasi: pd.DataFrame | None = None    # tanggal acuan valid + pred_h1..h7 (lihat data_validasi)
+    hari: dict[str, int] = field(default_factory=dict)              # stasiun -> jumlah hari di file
+    dilewati_meteo: dict[str, int] = field(default_factory=dict)    # stasiun -> tanggal acuan dilewati
 
     @property
     def ok(self) -> bool:
@@ -114,6 +120,8 @@ def buat_template(dataset_mentah: pd.DataFrame, stasiun: str = "DKI1 Bundaran HI
            for f in KOLOM_ANGKA])
     aturan = pd.DataFrame({"aturan": [
         f"Minimal {MIN_HARI} hari berturut-turut per stasiun; prediksi dihitung dari tanggal terakhir.",
+        f"Untuk tab Validasi (prediksi vs aktual), unggah minimal {MIN_HARI_VALIDASI} hari berturut-turut: "
+        f"{MIN_HARI} hari untuk lag + 7 hari nilai aktual.",
         "Boleh berisi sebagian stasiun saja; satu file boleh berisi beberapa stasiun.",
         "Kepadatan penduduk & luas RTH tidak perlu diisi (otomatis memakai nilai tahun terakhir dataset).",
         "Nilai di luar rentang dataset tetap diproses tetapi diberi peringatan.",
@@ -326,7 +334,27 @@ def proses(mentah: pd.DataFrame, models: dict, dataset: pd.DataFrame, rentang: p
     pred = pd.concat(semua, ignore_index=True)
     pred["kategori"] = pred["pm25"].map(lambda v: kategori_ispu(v)["kategori"])
     hasil.prediksi = pred
+
+    hasil.data = siap
+    hasil.hari = siap.groupby("stasiun").size().to_dict()
+    hasil.validasi, hasil.dilewati_meteo = data_validasi(siap, models)
     return hasil
+
+
+def data_validasi(siap: pd.DataFrame, models: dict) -> tuple[pd.DataFrame, dict[str, int]]:
+    """Tanggal acuan yang bisa divalidasi + prediksi pred_h1..h7.
+
+    Syarat sama dengan data uji Evaluation (lag 1–3, rata-rata 3 hari, dan target t+1..t+7 terisi),
+    ditambah meteorologi hari acuan lengkap (konsisten dengan aturan hari terakhir unggahan).
+    Seluruh file dianggap data uji, tanpa split 85%. Mengembalikan (data valid, {stasiun: jumlah dilewati}).
+    """
+    kandidat = siap.dropna(subset=KOLOM_LAG + KOLOM_TARGET)
+    lengkap = kandidat[FITUR_METEOROLOGI].notna().all(axis=1)
+    dilewati = {s: int(n) for s, n in (~lengkap).groupby(kandidat["stasiun"]).sum().items() if n}
+    valid = kandidat[lengkap].reset_index(drop=True)
+    if valid.empty:
+        return valid.assign(**{f"pred_h{h}": pd.Series(dtype=float) for h in HORIZONS}), dilewati
+    return pd.concat([valid, prediksi_batch(models, valid)], axis=1), dilewati
 
 
 def hasil_ke_csv(prediksi: pd.DataFrame) -> bytes:

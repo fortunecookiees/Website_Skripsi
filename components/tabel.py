@@ -89,3 +89,20 @@ def nilai_turunan(f: str, v: float) -> str:
     if f == "hari":
         return HARI[int(v)]
     return angka(v, 1 if f == "pm25_roll3" else 0) + " ISPU"
+
+
+def tabel_rata_bulanan(t: pd.DataFrame) -> None:
+    """Rata-rata PM2.5 bulanan (baris) per stasiun (kolom); sel diwarnai lembut sesuai kategori ISPU."""
+    kepala = "".join(f'<th class="num">{s.split()[0]}</th>' for s in t.columns)
+    isi = []
+    for periode, baris in t.iterrows():
+        sel = []
+        for v in baris:
+            if pd.isna(v):
+                sel.append('<td class="num heat">–</td>')
+                continue
+            k = kategori_ispu(v)
+            sel.append(f'<td class="num heat" style="background:{k["bg"]};color:{k["warna_teks"]}" '
+                       f'title="{k["kategori"]}">{k["nilai"]}</td>')
+        isi.append(f"<tr><td>{BULAN[periode.month - 1][:3]} {periode.year}</td>{''.join(sel)}</tr>")
+    st.html(f'<table class="tbl heatTbl"><tr><th>Bulan</th>{kepala}</tr>{"".join(isi)}</table>')

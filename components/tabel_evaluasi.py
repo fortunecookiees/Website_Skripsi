@@ -11,6 +11,47 @@ from .kartu import tag
 KELOMPOK_FITUR = {**{f: "Spasial" for f in FITUR_SPASIAL}, **{f: "Meteorologi" for f in FITUR_METEOROLOGI},
                   **{f: "Polutan" for f in FITUR_POLUTAN}}
 NAMA_IMPORTANCE = {"pm25": "PM2.5 hari ini", "pm10": "PM10"}
+CATATAN_DIISI = ("Nilai bertanda <i>data diisi</i> berasal dari pengisian data kosong (forward fill), sehingga "
+                 "tidak dihitung kesalahannya, sama seperti perhitungan metrik saat pelatihan yang hanya memakai "
+                 "nilai asli.")
+
+
+def legend_sekitar_acuan(semua_asli: bool) -> str:
+    """Legend grafik sekitar tanggal acuan; item 'data diisi' hanya jika ada titik hasil ffill."""
+    legend = ['<span><i style="background:#1c1c1c"></i>Nilai aktual</span>',
+              '<span><i style="background:#8c8c8c"></i>Nilai prediksi (t+1 … t+7)</span>']
+    if not semua_asli:
+        legend.append('<span><i style="background:#fff;border:1.5px solid #1c1c1c;border-radius:50%"></i>'
+                      'Titik berongga: data diisi</span>')
+    return f'<div class="legend">{"".join(legend)}</div>'
+
+
+def strip_metrik_acuan(m: dict) -> str:
+    """MAE · RMSE · MAPE satu tanggal acuan (hasil core.metrik.metrik_acuan)."""
+    if not m["n"]:
+        return ('<div class="mStrip"><span class="diisi">Metrik tidak dapat dihitung: seluruh nilai aktual '
+                't+1 … t+7 merupakan data diisi.</span></div>')
+    sel = [("MAE", angka(m["MAE"], 1)), ("RMSE", angka(m["RMSE"], 1)),
+           ("MAPE", "–" if m["MAPE"] is None else f"{angka(m['MAPE'], 1)} %")]
+    isi = "".join(f'<div class="m"><span>{k}</span><b>{v}</b></div>' for k, v in sel)
+    lewat = len(HORIZONS) - m["n"]
+    ket = f"Dihitung dari {m['n']} horizon"
+    if lewat:
+        ket += f" ({lewat} nilai aktual berupa data diisi tidak dihitung)"
+    return (f'<div class="mStrip">{isi}<div class="ket">{ket}, memakai nilai prediksi sebelum dibulatkan.'
+            '</div></div>')
+
+
+def tabel_ringkasan_validasi(r: pd.DataFrame) -> None:
+    """MAE & RMSE per horizon atas semua tanggal acuan (hasil core.metrik.ringkasan_horizon)."""
+    isi = []
+    for _, b in r.iterrows():
+        mae = "–" if b["MAE"] is None or pd.isna(b["MAE"]) else angka(b["MAE"], 1)
+        rmse = "–" if b["RMSE"] is None or pd.isna(b["RMSE"]) else angka(b["RMSE"], 1)
+        isi.append(f'<tr><td>t+{int(b["horizon"])}</td><td class="num">{mae}</td><td class="num">{rmse}</td>'
+                   f'<td class="num">{int(b["n"])}</td></tr>')
+    st.html('<table class="tbl"><tr><th>Horizon</th><th class="num">MAE</th><th class="num">RMSE</th>'
+            f'<th class="num">Jumlah tanggal acuan</th></tr>{"".join(isi)}</table>')
 
 
 def _tanda(d: int) -> str:

@@ -56,8 +56,9 @@ def _baris_slider(fitur: str, nilai: float, rentang: pd.Series, terkunci: bool, 
         c_nilai.html('<div class="sVal">–</div>')
         return float("nan")
     lo, hi = float(rentang["min"]), float(rentang["max"])
-    if kunci not in st.session_state:  # nilai awal = kondisi aktual; selanjutnya dikendalikan slider
-        st.session_state[kunci] = min(max(float(nilai), lo), hi)
+    if kunci not in st.session_state:
+        # panel terkunci (Mode Aktual) menampilkan kondisi aktual; slider simulasi mulai dari ujung kiri (minimum dataset)
+        st.session_state[kunci] = min(max(float(nilai), lo), hi) if terkunci else lo
     with c_slider:
         v = st.slider(nama, min_value=lo, max_value=hi, step=langkah,
                       disabled=terkunci, label_visibility="collapsed", key=kunci)

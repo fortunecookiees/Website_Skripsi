@@ -6,6 +6,7 @@ import streamlit as st
 
 from core.config import EVAL_PATH, FITUR, RTH_KOORDINAT_PATH, SKENARIO_PATH
 from core.inference import muat_model, prediksi_7_hari, prediksi_batch
+from core.metrik import bentuk_panjang
 from core.preprocessing import data_evaluasi, kondisi_terakhir, muat_dataset, preprocess
 from core.unggah import buat_template
 
@@ -53,11 +54,24 @@ def periode_uji() -> tuple[pd.Timestamp, pd.Timestamp, int]:
     return batas, uji["tanggal"].max(), len(uji)
 
 
-@st.cache_data(show_spinner="Menghitung prediksi data uji…")
-def prediksi_uji() -> pd.DataFrame:
-    """Data uji (replikasi split training) + kolom pred_h1..pred_h7."""
+@st.cache_data
+def data_uji() -> pd.DataFrame:
+    """Data uji (replikasi split training), tanpa prediksi; prediksi dihitung saat tombol Prediksi diklik."""
     uji, _ = data_evaluasi(dataset())
-    return pd.concat([uji, prediksi_batch(model(), uji)], axis=1)
+    return uji
+
+
+def prediksi_baris_uji(baris: pd.Series) -> pd.Series:
+    """Satu baris data uji + kolom pred_h1..pred_h7."""
+    pred = prediksi_batch(model(), baris.to_frame().T).iloc[0]
+    return pd.concat([baris, pred])
+
+
+@st.cache_data(show_spinner=False)
+def prediksi_uji_panjang() -> pd.DataFrame:
+    """Seluruh prediksi data uji, satu baris per (stasiun, tanggal acuan, horizon). Dihitung sekali saat diminta."""
+    uji = data_uji()
+    return bentuk_panjang(pd.concat([uji, prediksi_batch(model(), uji)], axis=1))
 
 
 @st.cache_data

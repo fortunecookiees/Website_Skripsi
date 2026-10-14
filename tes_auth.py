@@ -6,7 +6,8 @@ import time
 
 import requests
 
-from auth.supabase import (PESAN_JARINGAN, AuthError, KlienAuth, cek_key, validasi_daftar, validasi_masuk)
+from auth.supabase import (PESAN_JARINGAN, AuthError, KlienAuth, cek_key, validasi_daftar, validasi_ganti_password,
+                           validasi_masuk, validasi_nama)
 
 lulus = gagal = 0
 
@@ -35,7 +36,16 @@ class HttpTiruan:
         self.respons, self.galat, self.permintaan = respons, galat, None
 
     def post(self, url, json=None, headers=None, timeout=None):
-        self.permintaan = {"url": url, "json": json, "headers": headers}
+        return self._catat("post", url, json, headers)
+
+    def put(self, url, json=None, headers=None, timeout=None):
+        return self._catat("put", url, json, headers)
+
+    def get(self, url, headers=None, timeout=None):
+        return self._catat("get", url, None, headers)
+
+    def _catat(self, metode, url, json, headers):
+        self.permintaan = {"metode": metode, "url": url, "json": json, "headers": headers}
         if self.galat:
             raise self.galat
         return self.respons
@@ -139,5 +149,29 @@ for nama, respons, aksi, kata in kasus:
 
 k, _ = klien(galat=requests.ConnectionError("tidak ada jaringan"))
 cek("error: jaringan putus", pesan_error(k, lambda k: k.masuk("b@c.id", "x")) == PESAN_JARINGAN)
+
+# Profil, ubah nama, ganti password
+USER = {"id": "u1", "email": "budi@contoh.com", "user_metadata": {"nama": "Budi"},
+        "created_at": "2026-10-01T03:00:00Z", "last_sign_in_at": "2026-10-13T07:30:00Z"}
+k, http = klien(Respons(200, USER))
+p = k.profil("akses")
+cek("profil: GET /user dengan token pengguna",
+    http.permintaan["metode"] == "get" and http.permintaan["url"].endswith("/auth/v1/user")
+    and http.permintaan["headers"]["Authorization"] == "Bearer akses" and http.permintaan["headers"]["apikey"] == KEY)
+cek("profil: data terbaca", (p.nama, p.email, p.dibuat) == ("Budi", "budi@contoh.com", "2026-10-01T03:00:00Z"))
+k, http = klien(Respons(200, {**USER, "user_metadata": {"nama": "Budi S"}}))
+p = k.ubah_nama("akses", "  Budi S ")
+cek("ubah nama: PUT /user data.nama (dipangkas)",
+    http.permintaan["metode"] == "put" and http.permintaan["json"] == {"data": {"nama": "Budi S"}} and p.nama == "Budi S")
+k, http = klien(Respons(200, USER))
+k.ganti_password("akses", "rahasiaBaru")
+cek("ganti password: PUT /user password", http.permintaan["json"] == {"password": "rahasiaBaru"})
+k, _ = klien(Respons(422, {"error_code": "same_password", "msg": "New password should be different"}))
+cek("ganti password: sama dengan lama", "berbeda" in pesan_error(k, lambda k: k.ganti_password("akses", "x")))
+cek("validasi nama kosong / terlalu panjang", validasi_nama(" ") != [] and validasi_nama("x" * 61) != []
+    and validasi_nama("Budi") == [])
+cek("validasi ganti password", validasi_ganti_password("", "123", "124") != []
+    and validasi_ganti_password("lama123", "lama123", "lama123") == ["Password baru harus berbeda dari password lama."]
+    and validasi_ganti_password("lama123", "baru123", "baru123") == [])
 
 print(f"\n{lulus} lulus, {gagal} gagal")

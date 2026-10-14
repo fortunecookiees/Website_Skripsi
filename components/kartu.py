@@ -108,3 +108,19 @@ def kotak_7_horizon(prediksi: pd.DataFrame) -> None:
             f'<div class="k" style="background:{k["bg"]};color:{k["warna_teks"]}">{nama}</div></div>'
         )
     st.html(f'<div class="h7">{"".join(kotak)}</div>')
+
+
+def kpi(item: list[tuple[str, str, str]], ispu: list[float | None] | None = None) -> str:
+    """Deretan kartu angka ringkas: [(label, nilai, keterangan)]. `ispu` opsional: nilai untuk warna angka."""
+    ispu = ispu or [None] * len(item)
+    kotak = []
+    for (lbl, nilai, ket), v in zip(item, ispu):
+        gaya = f' style="color:{kategori_ispu(v)["warna_teks"]}"' if v is not None else ""
+        kotak.append(f'<div class="kpi"><div class="kl">{lbl}</div><div class="kv2"{gaya}>{nilai}</div>'
+                     f'<div class="kk">{ket}</div></div>')
+    return f'<div class="kpiRow">{"".join(kotak)}</div>'
+
+
+def kosong(judul: str, teks: str) -> str:
+    """Keadaan kosong (filter tanpa hasil, belum dihitung, dsb.)."""
+    return f'<div class="simKosong"><b>{judul}</b><br>{teks}</div>'
