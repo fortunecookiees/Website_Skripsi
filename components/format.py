@@ -54,6 +54,19 @@ def tanggal_panjang(t) -> str:
     return f"{t.day} {BULAN[t.month - 1]} {t.year}"
 
 
+def waktu_jakarta(iso: str | None, bulan_pendek: bool = False, jam: bool = True, wib: bool = False) -> str:
+    """Waktu ISO dari server (UTC jika tanpa zona) -> WIB, mis. '8 November 2025, 13.05 WIB'. '–' jika kosong."""
+    if not iso:
+        return "–"
+    w = pd.Timestamp(iso)
+    w = w.tz_convert("Asia/Jakarta") if w.tzinfo else w.tz_localize("UTC").tz_convert("Asia/Jakarta")
+    bulan = BULAN[w.month - 1]
+    teks = f"{w.day} {bulan[:3] if bulan_pendek else bulan} {w.year}"
+    if jam:
+        teks += f", {w:%H.%M}" + (" WIB" if wib else "")
+    return teks
+
+
 def tanggal_pendek(t, tahun: bool = False) -> str:
     t = pd.Timestamp(t)
     s = f"{t.day} {BULAN[t.month - 1][:3]}"

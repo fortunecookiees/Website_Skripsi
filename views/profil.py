@@ -1,27 +1,18 @@
 """Halaman Profil Akun — info akun (Supabase Auth), ubah nama, ganti password, riwayat unggahan sesi ini."""
 from html import escape
 
-import pandas as pd
 import streamlit as st
 
 from auth.supabase import AuthError, validasi_ganti_password, validasi_nama
 from components import akun, riwayat
 from components.bahasa import t
-from components.format import BULAN, tanggal_pendek
+from components.format import tanggal_pendek, waktu_jakarta
 from components.kartu import judul_kartu
 from components.tema import judul, label
 
 KUNCI_PROFIL = "profil_data"          # (access token, Profil) — dimuat ulang jika token berganti
 KUNCI_PESAN_NAMA = "profil_pesan_nama"
 KUNCI_PESAN_PW = "profil_pesan_pw"
-
-
-def _waktu(iso: str | None) -> str:
-    if not iso:
-        return "–"
-    w = pd.Timestamp(iso)
-    w = (w.tz_convert("Asia/Jakarta") if w.tzinfo else w.tz_localize("UTC").tz_convert("Asia/Jakarta"))
-    return f"{w.day} {BULAN[w.month - 1]} {w.year}, {w:%H.%M} WIB"
 
 
 def _muat_profil(sesi):
@@ -92,8 +83,8 @@ def kartu_profil(sesi, profil) -> None:
     inisial = escape((nama.strip()[:1] or "?").upper())
     peran = "Admin" if profil and profil.peran == "admin" else t("Pengguna", "User")
     n = len(riwayat.daftar())
-    info = [("calendar_month", t("Terdaftar", "Registered"), _waktu(profil.dibuat) if profil else "–"),
-            ("login", t("Masuk terakhir", "Last sign-in"), _waktu(profil.masuk_terakhir) if profil else "–"),
+    info = [("calendar_month", t("Terdaftar", "Registered"), waktu_jakarta(profil.dibuat, wib=True) if profil else "–"),
+            ("login", t("Masuk terakhir", "Last sign-in"), waktu_jakarta(profil.masuk_terakhir, wib=True) if profil else "–"),
             ("upload_file", t("Unggahan sesi ini", "Uploads this session"), t(f"{n} berkas", f"{n} files"))]
     baris = "".join(f'<div class="pkBaris"><span class="material-symbols-rounded">{ikon}</span><div><span>{k}</span>'
                     f'<b>{escape(v)}</b></div></div>' for ikon, k, v in info)

@@ -12,7 +12,7 @@ from auth.admin import AdminError, boleh_diubah
 from components import akun
 from components import sumber_data as sd
 from components.bahasa import t
-from components.format import BULAN, angka
+from components.format import angka, waktu_jakarta
 from components.kartu import judul_kartu, kosong, kpi
 from components.tema import judul, label
 from core.config import STASIUN
@@ -27,12 +27,8 @@ KUNCI_DATA = "admin_data_valid"   # (file_id, nama file, DataFrame lolos validas
 
 
 def _waktu(iso: str | None, jam: bool = True) -> str:
-    if not iso:
-        return "–"
-    w = pd.Timestamp(iso)
-    w = w.tz_convert("Asia/Jakarta") if w.tzinfo else w.tz_localize("UTC").tz_convert("Asia/Jakarta")
-    teks = f"{w.day} {BULAN[w.month - 1][:3]} {w.year}"
-    return f"{teks}, {w:%H.%M}" if jam else teks
+    """Format ringkas untuk tabel admin: '8 Nov 2025, 13.05' (tanpa jam bila jam=False)."""
+    return waktu_jakarta(iso, bulan_pendek=True, jam=jam)
 
 
 STATUS_EN = {"Aktif": "Active", "Nonaktif": "Inactive", "Belum konfirmasi": "Unconfirmed"}

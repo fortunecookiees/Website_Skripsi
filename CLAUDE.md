@@ -1,6 +1,12 @@
 # Konteks Project: Aplikasi Prediksi PM2.5 DKI Jakarta (Skripsi)
 
-Aplikasi web Streamlit untuk menampilkan prediksi ISPU PM2.5 di 5 SPKU DKI Jakarta, 1–7 hari ke depan. Model XGBoost (hyperparameter hasil PSO) **sudah dilatih di Google Colab**. Aplikasi ini **tidak melakukan training ulang**, hanya inference. Tidak pakai database dan tidak pakai login. Semua data dibaca dari file statis.
+Aplikasi web Streamlit untuk menampilkan prediksi ISPU PM2.5 di 5 SPKU DKI Jakarta, 1–7 hari ke depan. Model XGBoost (hyperparameter hasil PSO) **sudah dilatih di Google Colab**. Aplikasi ini **tidak melakukan training ulang**, hanya inference. Model, dataset penelitian, dan hasil evaluasi dibaca dari file statis.
+
+Tambahan di luar rancangan awal (tidak memakai database tabel):
+- **Supabase Auth** (REST, `auth/supabase.py`, publishable key): masuk/daftar, profil. Login hanya wajib untuk Unggah Data & Profil; sesi disimpan di `st.session_state` (hilang saat refresh).
+- **Admin** (`auth/admin.py`, secret key hanya di server): kelola pengguna dan versi data Dashboard di **Supabase Storage** (bucket privat, `manifest.json` + `versi/<id>.csv`). Peran dari `app_metadata.role`, dicek ulang di server setiap halaman/aksi admin.
+- Versi data admin **hanya** dipakai Dashboard (Mode Aktual & titik awal simulasi) dan Beranda. Evaluation, Data Historis, metrik, model, dan rentang slider tetap dataset penelitian.
+- Secrets di `.streamlit/secrets.toml` (`[supabase]` url, key, service_key, bucket) — tidak di-commit, jangan pernah ditampilkan.
 
 ## File yang tersedia
 
@@ -61,12 +67,19 @@ Warna **hanya** dipakai untuk kategori ISPU. Elemen lain pakai warna netral.
 
 - Pilih 1 dari 5 stasiun
 - Panel input 21 fitur dikelompokkan: spasial (dengan penanda), meteorologi, polutan, turunan
-- **Mode Prediksi Aktual**: semua nilai dikunci ke kondisi terakhir dataset (8 Nov 2025), prediksi 9–15 Nov 2025
+- **Mode Prediksi Aktual**: semua nilai dikunci ke kondisi terakhir data Dashboard (versi aktif admin; jika tidak ada → dataset penelitian, 8 Nov 2025, prediksi 9–15 Nov 2025)
 - **Mode Simulasi**: spasial, meteorologi, dan polutan bisa diubah, sedangkan fitur turunan tetap terkunci. Tampilkan tabel perbandingan aktual vs simulasi + disclaimer "hasil simulasi bukan prediksi kondisi sebenarnya"
   - Toggle "Samakan PM2.5 3 hari sebelumnya dengan nilai hari ini" (default mati). Mati: lag & rolling dari data historis. Nyala: pm25_lag1..lag3 = slider PM2.5, pm25_roll3 = rata-rata ketiganya (`core/simulasi.py`). Bulan & hari tetap dari kondisi acuan. Model & preprocessing tidak berubah
 - Output: nilai PM2.5 t+1..t+7 + kategori & warna ISPU, grafik 7 hari
 - Ringkasan status kelima stasiun (prediksi t+1 tiap stasiun)
 - Peta interaktif lokasi 5 SPKU
+
+### Halaman tambahan
+
+- **Beranda** (halaman pertama): judul penelitian, ringkasan prediksi t+1 lima stasiun, pintasan fitur
+- **Data Historis**: filter stasiun/tanggal/kategori, tampilan harian/mingguan/bulanan, unduh CSV (dataset penelitian)
+- **Unggah Data** (wajib login): template, validasi `core/unggah.py`, prediksi 7 hari + tab Validasi (≥11 hari); data hanya selama sesi
+- **Masuk/Daftar, Profil, Admin** (lihat bagian tambahan di atas)
 
 ### 2. Evaluation
 

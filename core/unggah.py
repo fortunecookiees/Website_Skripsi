@@ -187,44 +187,38 @@ def baca_file(isi: bytes, nama_file: str) -> pd.DataFrame:
 # ---------------------------------------------------------------------
 # Validasi
 # ---------------------------------------------------------------------
-def validasi(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str], list[str]]:
-    """Periksa struktur & isi. Mengembalikan (data bersih atau None, error, info)."""
-    error, info = [], []
-    df = mentah.copy()
-    df.columns = [str(c).strip().lower() for c in df.columns]
-    df = df.dropna(how="all")
-    if df.empty:
-        return None, [tr("File tidak berisi data.", "The file contains no data.")], info
-
-    # --- kolom ---
+def _cek_kolom(df: pd.DataFrame) -> tuple[list[str], list[str]]:
+    """Kolom wajib lengkap? Mengembalikan (error, info). Kolom tambahan diabaikan dengan info."""
     kurang = [k for k in KOLOM_WAJIB if k not in df.columns]
     if kurang:
         lain = [c for c in df.columns if c not in KOLOM_WAJIB]
         saran = []
         for k in kurang:
             mirip = difflib.get_close_matches(k, lain, n=1, cutoff=0.6)
-            mungkin = tr(f" (mungkin tertulis <code>{mirip[0]}</code>?)", f" (perhaps written as <code>{mirip[0]}</code>?)")
-            saran.append(f"<code>{k}</code>" + (mungkin if mirip else ""))
-        error.append(tr(f"Kolom wajib tidak ditemukan: {', '.join(saran)}. Gunakan nama kolom sesuai template.",
-                        f"Required columns not found: {', '.join(saran)}. Use the column names from the template."))
-        return None, error, info
+            mungkin = (tr(f" (mungkin tertulis <code>{mirip[0]}</code>?)",
+                          f" (perhaps written as <code>{mirip[0]}</code>?)") if mirip else "")
+            saran.append(f"<code>{k}</code>{mungkin}")
+        return [tr(f"Kolom wajib tidak ditemukan: {', '.join(saran)}. Gunakan nama kolom sesuai template.",
+                   f"Required columns not found: {', '.join(saran)}. Use the column names from the template.")], []
+    info = []
     ekstra = [c for c in df.columns if c not in KOLOM_WAJIB]
-    if ekstra:
-        abai_spasial = [c for c in ekstra if c in FITUR_SPASIAL]
-        abai_lain = [c for c in ekstra if c not in FITUR_SPASIAL]
-        if abai_spasial:
-            info.append(tr("Kolom kepadatan penduduk/luas RTH pada file diabaikan; aplikasi memakai nilai tahun "
-                           "terakhir dari dataset.",
-                           "Population density/green open space columns in the file are ignored; the app uses "
-                           "the latest year from the dataset."))
-        if abai_lain:
-            info.append(tr(f"Kolom tambahan diabaikan: {', '.join(abai_lain)}.",
-                           f"Extra columns ignored: {', '.join(abai_lain)}."))
-    df = df[KOLOM_WAJIB]
+    abai_spasial = [c for c in ekstra if c in FITUR_SPASIAL]
+    abai_lain = [c for c in ekstra if c not in FITUR_SPASIAL]
+    if abai_spasial:
+        info.append(tr("Kolom kepadatan penduduk/luas RTH pada file diabaikan; aplikasi memakai nilai tahun "
+                       "terakhir dari dataset.",
+                       "Population density/green open space columns in the file are ignored; the app uses "
+                       "the latest year from the dataset."))
+    if abai_lain:
+        info.append(tr(f"Kolom tambahan diabaikan: {', '.join(abai_lain)}.",
+                       f"Extra columns ignored: {', '.join(abai_lain)}."))
+    return [], info
 
-    # --- tanggal ---
+
+def _baca_tanggal(kolom: pd.Series) -> tuple[list, list[str]]:
+    """Ubah kolom tanggal ke Timestamp (NaT jika tidak valid). Mengembalikan (tanggal, error)."""
     tanggal, salah = [], []
-    for idx, v in df["tanggal"].items():
+    for idx, v in kolom.items():
         if isinstance(v, (pd.Timestamp, np.datetime64)) or hasattr(v, "year"):
             tanggal.append(pd.Timestamp(v).normalize())
         elif isinstance(v, str) and _POLA_TANGGAL.match(v.strip()):
@@ -241,22 +235,25 @@ def validasi(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str], list
                             "contoh 2025-11-08.",
                             f"Row {_baris_excel(idx)}: invalid date '{isi}'. Use the YYYY-MM-DD format, e.g. "
                             "2025-11-08."))
-    error += _ringkas(salah)
-    df["tanggal"] = tanggal
+    return tanggal, _ringkas(salah)
 
-    # --- stasiun ---
+
+def _baca_stasiun(kolom: pd.Series) -> tuple[pd.Series, list[str]]:
+    """Nama/kode stasiun -> nama baku (None jika tidak dikenal). Mengembalikan (stasiun, error)."""
     peta = _peta_stasiun()
-    asli = df["stasiun"].copy()
-    df["stasiun"] = asli.map(lambda v: peta.get(" ".join(str(v).lower().split())) if pd.notna(v) else None)
-    tak_dikenal = df["stasiun"].isna()
-    salah_st = asli[tak_dikenal].fillna(tr("(kosong)", "(empty)")).astype(str)
+    baku = kolom.map(lambda v: peta.get(" ".join(str(v).lower().split())) if pd.notna(v) else None)
+    salah_st = kolom[baku.isna()].fillna(tr("(kosong)", "(empty)")).astype(str)
     pilihan = ", ".join(f"{s} / {s.split()[0]}" for s in STASIUN)
+    error = []
     for nilai, grup in salah_st.groupby(salah_st, sort=False):
         baris = _daftar_baris(grup.index)
         error.append(tr(f"Stasiun '{nilai}' tidak dikenal (baris {baris}). Pilihan: {pilihan}.",
                         f"Unknown station '{nilai}' (row {baris}). Options: {pilihan}."))
+    return baku, error
 
-    # --- angka ---
+
+def _baca_angka(df: pd.DataFrame) -> list[str]:
+    """Ubah KOLOM_ANGKA ke float di tempat (desimal koma diterima). Mengembalikan error bukan angka / negatif."""
     salah = []
     for kol in KOLOM_ANGKA:
         hasil = pd.Series([_ke_angka(v) for v in df[kol]], index=df.index, dtype=object)
@@ -272,48 +269,74 @@ def validasi(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str], list
                             f"Row {_baris_excel(idx)}, column <code>{kol}</code>: negative value "
                             f"({_g(hasil[idx])}) is not valid."))
         df[kol] = hasil
-    error += _ringkas(salah)
+    return _ringkas(salah)
+
+
+def _cek_per_stasiun(st_nama: str, g: pd.DataFrame) -> list[str]:
+    """Tanggal duplikat/bolong, jumlah hari minimum, PM2.5 4 hari terakhir, dan meteorologi hari terakhir."""
+    g = g.sort_values("tanggal")
+    dup = g[g["tanggal"].duplicated(keep=False)]
+    if not dup.empty:
+        tgl = sorted({_tgl(t) for t in dup["tanggal"]})
+        return [tr(f"{st_nama}: tanggal duplikat {', '.join(tgl)} (baris {_daftar_baris(dup.index)}).",
+                   f"{st_nama}: duplicate dates {', '.join(tgl)} (rows {_daftar_baris(dup.index)}).")]
+    error = []
+    selisih = g["tanggal"].diff().dt.days
+    for i in selisih[selisih > 1].index:
+        sebelum = g["tanggal"].shift(1)[i]
+        a, b = _tgl(sebelum), _tgl(g.at[i, "tanggal"])
+        error.append(tr(f"{st_nama}: tanggal bolong antara {a} dan {b}. Data harus berurutan setiap hari.",
+                        f"{st_nama}: missing dates between {a} and {b}. Data must be consecutive days."))
+    if len(g) < MIN_HARI:
+        error.append(tr(f"{st_nama}: hanya {len(g)} hari data; minimal {MIN_HARI} hari berturut-turut "
+                        "(hari terakhir + 3 hari sebelumnya untuk lag PM2.5).",
+                        f"{st_nama}: only {len(g)} days of data; at least {MIN_HARI} consecutive days are "
+                        "needed (the last day + 3 previous days for the PM2.5 lags)."))
+        return error
+    akhir = g.tail(MIN_HARI)
+    kosong = akhir[akhir["pm25"].isna()]
+    if not kosong.empty:
+        tgl_kosong = ", ".join(_tgl(t) for t in kosong["tanggal"])
+        error.append(tr(f"{st_nama}: PM2.5 kosong pada {tgl_kosong}. PM2.5 wajib terisi pada {MIN_HARI} hari "
+                        "terakhir karena dipakai untuk lag dan rata-rata 3 hari.",
+                        f"{st_nama}: PM2.5 is empty on {tgl_kosong}. PM2.5 must be filled for the last "
+                        f"{MIN_HARI} days because it is used for the lags and the 3-day average."))
+    terakhir = g.iloc[-1]
+    meteo_kosong = [k for k in FITUR_METEOROLOGI if pd.isna(terakhir[k])]
+    if meteo_kosong:
+        kol = ", ".join(f"<code>{k}</code>" for k in meteo_kosong)
+        tgl_akhir = _tgl(terakhir["tanggal"])
+        error.append(tr(f"{st_nama}: data meteorologi hari terakhir ({tgl_akhir}) kosong pada kolom {kol}. "
+                        "Meteorologi hari terakhir wajib diisi.",
+                        f"{st_nama}: weather data for the last day ({tgl_akhir}) is empty in columns {kol}. "
+                        "Weather for the last day is required."))
+    return error
+
+
+def validasi(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str], list[str]]:
+    """Periksa struktur & isi. Mengembalikan (data bersih atau None, error, info).
+
+    Urutan: kolom -> tanggal, stasiun, angka (semua dikumpulkan) -> pemeriksaan per stasiun.
+    """
+    df = mentah.copy()
+    df.columns = [str(c).strip().lower() for c in df.columns]
+    df = df.dropna(how="all")
+    if df.empty:
+        return None, [tr("File tidak berisi data.", "The file contains no data.")], []
+
+    error, info = _cek_kolom(df)
+    if error:
+        return None, error, info
+    df = df[KOLOM_WAJIB]
+
+    df["tanggal"], error = _baca_tanggal(df["tanggal"])
+    df["stasiun"], error_stasiun = _baca_stasiun(df["stasiun"])
+    error += error_stasiun + _baca_angka(df)
     if error:
         return None, error, info
 
-    # --- per stasiun: duplikat, bolong, jumlah hari, pm25 & meteorologi ---
     for st_nama, g in df.groupby("stasiun"):
-        g = g.sort_values("tanggal")
-        dup = g[g["tanggal"].duplicated(keep=False)]
-        if not dup.empty:
-            tgl = sorted({_tgl(t) for t in dup["tanggal"]})
-            error.append(tr(f"{st_nama}: tanggal duplikat {', '.join(tgl)} (baris {_daftar_baris(dup.index)}).",
-                            f"{st_nama}: duplicate dates {', '.join(tgl)} (rows {_daftar_baris(dup.index)})."))
-            continue
-        selisih = g["tanggal"].diff().dt.days
-        for i in selisih[selisih > 1].index:
-            sebelum = g["tanggal"].shift(1)[i]
-            a, b = _tgl(sebelum), _tgl(g.at[i, "tanggal"])
-            error.append(tr(f"{st_nama}: tanggal bolong antara {a} dan {b}. Data harus berurutan setiap hari.",
-                            f"{st_nama}: missing dates between {a} and {b}. Data must be consecutive days."))
-        if len(g) < MIN_HARI:
-            error.append(tr(f"{st_nama}: hanya {len(g)} hari data; minimal {MIN_HARI} hari berturut-turut "
-                            "(hari terakhir + 3 hari sebelumnya untuk lag PM2.5).",
-                            f"{st_nama}: only {len(g)} days of data; at least {MIN_HARI} consecutive days are "
-                            "needed (the last day + 3 previous days for the PM2.5 lags)."))
-            continue
-        akhir = g.tail(MIN_HARI)
-        kosong = akhir[akhir["pm25"].isna()]
-        if not kosong.empty:
-            tgl_kosong = ", ".join(_tgl(t) for t in kosong["tanggal"])
-            error.append(tr(f"{st_nama}: PM2.5 kosong pada {tgl_kosong}. PM2.5 wajib terisi pada {MIN_HARI} hari "
-                            "terakhir karena dipakai untuk lag dan rata-rata 3 hari.",
-                            f"{st_nama}: PM2.5 is empty on {tgl_kosong}. PM2.5 must be filled for the last "
-                            f"{MIN_HARI} days because it is used for the lags and the 3-day average."))
-        terakhir = g.iloc[-1]
-        meteo_kosong = [k for k in FITUR_METEOROLOGI if pd.isna(terakhir[k])]
-        if meteo_kosong:
-            kol = ", ".join(f"<code>{k}</code>" for k in meteo_kosong)
-            tgl_akhir = _tgl(terakhir["tanggal"])
-            error.append(tr(f"{st_nama}: data meteorologi hari terakhir ({tgl_akhir}) kosong pada kolom {kol}. "
-                            "Meteorologi hari terakhir wajib diisi.",
-                            f"{st_nama}: weather data for the last day ({tgl_akhir}) is empty in columns {kol}. "
-                            "Weather for the last day is required."))
+        error += _cek_per_stasiun(st_nama, g)
     if error:
         return None, error, info
     return df.reset_index(drop=True), error, info
