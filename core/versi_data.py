@@ -16,6 +16,7 @@ from typing import Callable
 import pandas as pd
 
 from .config import STASIUN
+from .teks import tr
 from .preprocessing import preprocess
 from .unggah import KOLOM_WAJIB, nilai_spasial_terakhir, validasi
 
@@ -87,7 +88,8 @@ def validasi_admin(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str]
         return None, error, info
     kurang = [s for s in STASIUN if s not in set(data["stasiun"])]
     if kurang:
-        return None, [f"Data Dashboard wajib berisi kelima stasiun. Belum ada: {', '.join(kurang)}."], info
+        return None, [tr(f"Data Dashboard wajib berisi kelima stasiun. Belum ada: {', '.join(kurang)}.",
+                         f"Dashboard data must include all five stations. Missing: {', '.join(kurang)}.")], info
     return data, error, info
 
 
@@ -142,16 +144,21 @@ def muat_data_dashboard(unduh: Callable[[str], bytes | None] | None,
     except Exception:  # noqa: BLE001 — apa pun penyebabnya Dashboard tetap jalan dengan dataset penelitian
         return dataset, SumberDashboard(SUMBER_PENELITIAN,
                                         peringatan="Data terbaru dari admin gagal dimuat; menampilkan dataset penelitian.")
+    # (hasil fungsi ini di-cache; peringatan diterjemahkan saat ditampilkan, lihat core.teks.terjemah)
 
 
-def label_sumber(s: SumberDashboard, akhir_penelitian: pd.Timestamp) -> str:
-    """Teks label sumber data untuk Dashboard."""
+def label_sumber(s: SumberDashboard, akhir_penelitian: pd.Timestamp, en: bool = False) -> str:
+    """Teks label sumber data untuk Dashboard (en=True: bahasa Inggris)."""
     tgl = lambda t: pd.Timestamp(t).strftime("%d-%m-%Y")  # noqa: E731
     if s.jenis != SUMBER_ADMIN or s.versi is None:
-        return f"Dataset penelitian · data s.d. {tgl(akhir_penelitian)}"
+        return (f"Research dataset · data up to {tgl(akhir_penelitian)}" if en
+                else f"Dataset penelitian · data s.d. {tgl(akhir_penelitian)}")
     v = s.versi
-    teks = f"Data diperbarui admin, terakhir {tgl(pd.Timestamp(v.diunggah).tz_convert('Asia/Jakarta'))} · data s.d. {tgl(v.akhir)}"
+    diunggah, akhir = tgl(pd.Timestamp(v.diunggah).tz_convert("Asia/Jakarta")), tgl(v.akhir)
+    teks = (f"Data updated by admin, last on {diunggah} · data up to {akhir}" if en
+            else f"Data diperbarui admin, terakhir {diunggah} · data s.d. {akhir}")
     tahun_data = {pd.Timestamp(v.mulai).year, pd.Timestamp(v.akhir).year}
     if s.tahun_spasial and tahun_data != {s.tahun_spasial}:
-        teks += f" · kepadatan penduduk & luas RTH tetap memakai nilai {s.tahun_spasial}"
+        teks += (f" · population density & green open space keep the {s.tahun_spasial} values" if en
+                 else f" · kepadatan penduduk & luas RTH tetap memakai nilai {s.tahun_spasial}")
     return teks

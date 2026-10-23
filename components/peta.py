@@ -9,6 +9,7 @@ from streamlit_folium import st_folium
 
 from core.config import KATEGORI_ISPU, STASIUN, kategori_ispu
 
+from .bahasa import kategori, t
 from .format import angka
 
 RTH_HIJAU = "#2E7D4F"
@@ -18,23 +19,27 @@ TILE_LABEL = ("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/"
               "World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}")
 TILE_ATTR = "Tiles &copy; Esri &mdash; Esri, Maxar, Earthstar Geographics, GIS User Community"
 RADIUS_RTH_MAKS = 42  # piksel untuk RTH terluas; lainnya sebanding akar luas
-NAMA_LAYER_RTH = "Titik RTH"
-SUMBER_LOKASI = {"objek": "OpenStreetMap (objek terverifikasi)", "manual": "Input manual"}
+def _nama_layer() -> str:
+    return t("Titik RTH", "Green spaces")
+
+
+SUMBER_LOKASI = {"objek": ("OpenStreetMap (objek terverifikasi)", "OpenStreetMap (verified object)"),
+                 "manual": ("Input manual", "Manual input")}
 
 
 def _popup_rth(r: pd.Series) -> folium.Popup:
-    kel = "" if pd.isna(r.get("kelurahan")) else f"Kel. {str(r['kelurahan']).title()}, "
+    kel = "" if pd.isna(r.get("kelurahan")) else f"{t('Kel.', 'Village')} {str(r['kelurahan']).title()}, "
     html = (f'<div style="font:12px Inter,Arial,sans-serif;line-height:1.5;min-width:180px">'
             f'<b>{escape(str(r["nama_rth"]).title())}</b><br>'
             f'{escape(str(r["jenis_rth"]).title())} · {angka(float(r["luas_m2"]))} m²<br>'
-            f'<span style="color:#8c8c8c">{escape(kel)}Kec. {escape(str(r["kecamatan"]).title())}<br>'
-            f'Lokasi: {SUMBER_LOKASI.get(r["presisi"], r["presisi"])}</span></div>')
+            f'<span style="color:#8c9b96">{escape(kel)}{t("Kec.", "District")} {escape(str(r["kecamatan"]).title())}'
+            f'<br>{t("Lokasi", "Location")}: {t(*SUMBER_LOKASI.get(r["presisi"], (r["presisi"],) * 2))}</span></div>')
     return folium.Popup(html, max_width=260)
 
 
 def _layer_rth(titik: pd.DataFrame) -> folium.FeatureGroup:
     """Titik RTH terverifikasi; ditampilkan hanya saat toggle di atas peta dinyalakan."""
-    fg = folium.FeatureGroup(name=NAMA_LAYER_RTH)
+    fg = folium.FeatureGroup(name=_nama_layer())
     for _, r in titik.iterrows():
         folium.CircleMarker(
             [r["lat"], r["lon"]], radius=5, color="#FFFFFF", weight=1.5,
@@ -55,16 +60,19 @@ def peta_stasiun(pred_t1: dict[str, float], luas_rth: dict[str, float], key: str
     with st.container(key=f"petabar_{key}"):
         kiri, kanan = st.columns([1.4, 1], vertical_alignment="center")
         kiri.html('<div class="petaInfo"><span class="material-symbols-rounded">location_on</span>'
-                  '5 SPKU · warna penanda = kategori ISPU prediksi t+1</div>')
+                  + t("5 SPKU · warna penanda = kategori ISPU prediksi t+1",
+                      "5 SPKU · marker color = ISPU category of the t+1 forecast") + '</div>')
         if ada_titik:
             with kanan:
-                tampil_titik = st.toggle(f"{NAMA_LAYER_RTH} · {len(titik_rth)} lokasi", key=f"{key}_rth",
-                                         help="Tampilkan taman, hutan kota, dan makam yang lokasinya terverifikasi")
+                tampil_titik = st.toggle(f"{_nama_layer()} · {len(titik_rth)} {t('lokasi', 'locations')}",
+                                         key=f"{key}_rth",
+                                         help=t("Tampilkan taman, hutan kota, dan makam yang lokasinya terverifikasi",
+                                                "Show parks, urban forests, and cemeteries with verified locations"))
 
     lat = sum(s["lat"] for s in STASIUN.values()) / len(STASIUN)
     lon = sum(s["lon"] for s in STASIUN.values()) / len(STASIUN)
     m = folium.Map(location=[lat, lon], zoom_start=11, tiles=None, control_scale=True, scrollWheelZoom=False)
-    folium.TileLayer(TILE, attr=TILE_ATTR, name="Peta dasar", control=False).add_to(m)
+    folium.TileLayer(TILE, attr=TILE_ATTR, name="Basemap", control=False).add_to(m)
     folium.TileLayer(TILE_LABEL, attr=TILE_ATTR, name="Label", overlay=True, control=False,
                      opacity=0.85).add_to(m)
     rth_maks = max(luas_rth.values())
@@ -77,9 +85,9 @@ def peta_stasiun(pred_t1: dict[str, float], luas_rth: dict[str, float], key: str
             color="#FFFFFF", weight=1, opacity=0.7,  # garis tepi agar terlihat di atas citra satelit
             fill=True, fill_color=RTH_HIJAU, fill_opacity=0.35,
         ).add_to(m)
-        tooltip = (f"<b>{nama}</b><br>Kec. {info['kecamatan']}<br>"
-                   f"Prediksi t+1: <b>{k['nilai']} ISPU</b> · {k['kategori']}<br>"
-                   f"Luas RTH: {angka(rth, 3)} km²")
+        tooltip = (f"<b>{nama}</b><br>{t('Kec.', 'District')} {info['kecamatan']}<br>"
+                   f"{t('Prediksi t+1', 't+1 forecast')}: <b>{k['nilai']} ISPU</b> · {kategori(k['kategori'])}<br>"
+                   f"{t('Luas RTH', 'GOS area')}: {angka(rth, 3)} km²")
         folium.CircleMarker(
             [info["lat"], info["lon"]], radius=9.5, color="#FFFFFF", weight=2.5,
             fill=True, fill_color=k["warna"], fill_opacity=1, tooltip=tooltip,
@@ -104,14 +112,17 @@ def peta_stasiun(pred_t1: dict[str, float], luas_rth: dict[str, float], key: str
 
 
 def _legend(n_titik: int) -> None:
-    item = [f'<span><i style="background:{warna}"></i>{nama} ({rentang})</span>'
+    item = [f'<span><i style="background:{warna}"></i>{kategori(nama)} ({rentang})</span>'
             for _, nama, rentang, warna, _, _ in KATEGORI_ISPU[:4]]
     item.append(f'<span><i class="rth" style="background:{RTH_HIJAU};opacity:.5"></i>'
-                "Luas RTH kecamatan (ukuran relatif antarstasiun)</span>")
+                + t("Luas RTH kecamatan (ukuran relatif antarstasiun)",
+                    "District green open space area (relative size between stations)") + "</span>")
     catatan = ""
     if n_titik:
         item.append(f'<span><i class="rth" style="background:{RTH_HIJAU};width:7px;height:7px"></i>'
-                    f'{NAMA_LAYER_RTH} ({n_titik} lokasi, nyalakan lewat tombol di atas peta)</span>')
-        catatan = ('<div class="note">Hanya RTH yang lokasinya terverifikasi sebagai taman/hutan/makam '
-                   'yang ditampilkan.</div>')
+                    + t(f"{_nama_layer()} ({n_titik} lokasi, nyalakan lewat tombol di atas peta)",
+                        f"{_nama_layer()} ({n_titik} locations, turn on with the switch above the map)") + '</span>')
+        catatan = ('<div class="note">' + t("Hanya RTH yang lokasinya terverifikasi sebagai taman/hutan/makam yang "
+                                            "ditampilkan.", "Only green spaces verified as parks, forests, or "
+                                            "cemeteries are shown.") + '</div>')
     st.html(f'<div class="legend">{"".join(item)}</div>{catatan}')

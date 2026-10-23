@@ -214,7 +214,7 @@ print("\n=== S1/S2/S3 + Diebold-Mariano (S1 vs S3) ===")
 for h in [1,2,3,4,5,6,7]:
     _,_,r1,p1 = latih(DASAR,     h, BEST)
     _,_,r2,_  = latih(DASAR+ST,  h, BEST)
-    _,_,r3,p3 = latih(DASAR+NOVELTY, h, BEST)
+    _,_,r3,p3 = latih(FITUR,     h, BEST)    # S3 = model utama (21 fitur, urutan sama)
     a = df.loc[m_te,f'target_h{h}_asli'].values.astype(bool)
     yt = df.loc[m_te,f'target_h{h}'].values[a]
     s, pv = dm_test(yt, p1[a], p3[a], h)

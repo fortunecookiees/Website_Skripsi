@@ -11,6 +11,8 @@ from urllib.parse import urlparse
 
 import requests
 
+from core.teks import terjemah
+
 PASSWORD_MIN = 6
 NAMA_MAKS = 60
 _POLA_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -34,6 +36,7 @@ PESAN_ERROR = {
     "same_password": "Password baru harus berbeda dari password lama.",
     "reauthentication_needed": "Demi keamanan, keluar lalu masuk kembali sebelum mengganti password.",
     "bad_jwt": "Sesi berakhir. Silakan masuk kembali.",
+    "user_banned": "Akun Anda dinonaktifkan oleh admin. Hubungi pengelola aplikasi.",
 }
 PESAN_UMUM = "Terjadi kesalahan pada server autentikasi. Coba lagi nanti."
 PESAN_JARINGAN = "Tidak dapat terhubung ke server autentikasi. Periksa koneksi internet lalu coba lagi."
@@ -43,6 +46,7 @@ class AuthError(Exception):
     """Kesalahan autentikasi dengan pesan bahasa Indonesia yang siap ditampilkan."""
 
     def __init__(self, pesan: str, kode: str | None = None):
+        pesan = terjemah(pesan)  # teks Indonesia tetap jadi acuan; ditampilkan sesuai bahasa aktif
         super().__init__(pesan)
         self.pesan, self.kode = pesan, kode
 
@@ -73,15 +77,15 @@ def validasi_daftar(nama: str, email: str, password: str, konfirmasi: str) -> li
         error.append(f"Password minimal {PASSWORD_MIN} karakter.")
     if password != konfirmasi:
         error.append("Konfirmasi password tidak cocok.")
-    return error
+    return [terjemah(e) for e in error]
 
 
 def validasi_nama(nama: str) -> list[str]:
     nama = nama.strip()
     if not nama:
-        return ["Nama wajib diisi."]
+        return [terjemah("Nama wajib diisi.")]
     if len(nama) > NAMA_MAKS:
-        return [f"Nama maksimal {NAMA_MAKS} karakter."]
+        return [terjemah(f"Nama maksimal {NAMA_MAKS} karakter.")]
     return []
 
 
@@ -95,7 +99,7 @@ def validasi_ganti_password(lama: str, baru: str, konfirmasi: str) -> list[str]:
         error.append("Password baru harus berbeda dari password lama.")
     if baru != konfirmasi:
         error.append("Konfirmasi password baru tidak cocok.")
-    return error
+    return [terjemah(e) for e in error]
 
 
 def validasi_masuk(email: str, password: str) -> list[str]:
@@ -104,7 +108,7 @@ def validasi_masuk(email: str, password: str) -> list[str]:
         error.append("Format email tidak valid, contoh: nama@email.com.")
     if not password:
         error.append("Password wajib diisi.")
-    return error
+    return [terjemah(e) for e in error]
 
 
 def cek_key(key: str) -> str | None:
@@ -229,6 +233,8 @@ def _error_dari(r) -> AuthError:
     teks = str(isi.get("msg") or isi.get("error_description") or isi.get("message") or "").lower()
     if "already registered" in teks or "already exists" in teks:
         return AuthError(PESAN_ERROR["user_already_exists"], "user_already_exists")
+    if "banned" in teks:  # GoTrue versi lama: tanpa error_code, pesan "User is banned"
+        return AuthError(PESAN_ERROR["user_banned"], "user_banned")
     if "invalid login credentials" in teks:
         return AuthError(PESAN_ERROR["invalid_credentials"], "invalid_credentials")
     if "password should be at least" in teks:

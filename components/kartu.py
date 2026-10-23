@@ -1,9 +1,10 @@
-"""Elemen kartu: judul kartu, angka besar, chip/tag kategori ISPU, kotak 7 horizon."""
+"""Elemen kartu: judul kartu, angka besar, chip/tag kategori ISPU, papan hasil prediksi 7 hari."""
 import pandas as pd
 import streamlit as st
 
-from core.config import SARAN_ISPU_PM25, kategori_ispu
+from core.config import KATEGORI_ISPU, kategori_ispu
 
+from .bahasa import kategori, saran, t
 from .format import tanggal_pendek
 
 
@@ -14,12 +15,12 @@ def judul_kartu(teks: str, keterangan: str = "") -> str:
 
 def chip(nilai: float) -> str:
     k = kategori_ispu(nilai)
-    return f'<span class="chip" style="background:{k["bg"]};color:{k["warna_teks"]}">{k["kategori"]}</span>'
+    return f'<span class="chip" style="background:{k["bg"]};color:{k["warna_teks"]}">{kategori(k["kategori"])}</span>'
 
 
 def tag(nilai: float) -> str:
     k = kategori_ispu(nilai)
-    return f'<span class="tag" style="background:{k["bg"]};color:{k["warna_teks"]}">{k["kategori"]}</span>'
+    return f'<span class="tag" style="background:{k["bg"]};color:{k["warna_teks"]}">{kategori(k["kategori"])}</span>'
 
 
 def angka_besar(nilai: float) -> str:
@@ -29,26 +30,27 @@ def angka_besar(nilai: float) -> str:
 
 def saran_kesehatan(nilai: float) -> str:
     """Rekomendasi PermenLHK P.14/2020 untuk PM2.5 sesuai kategori nilai."""
-    sensitif, umum = SARAN_ISPU_PM25[kategori_ispu(nilai)["kategori"]]
+    sensitif, umum = saran(kategori_ispu(nilai)["kategori"])
     if sensitif is None:
         return f"{umum}."
-    kecil = lambda t: t[0].lower() + t[1:]  # noqa: E731
-    return f"Kelompok sensitif: {kecil(sensitif)}. Setiap orang: {kecil(umum)}."
+    kecil = lambda s: s[0].lower() + s[1:]  # noqa: E731
+    return t(f"Kelompok sensitif: {kecil(sensitif)}. Setiap orang: {kecil(umum)}.",
+             f"Sensitive groups: {kecil(sensitif)}. Everyone: {kecil(umum)}.")
 
 
 def _selisih(baru: int, lama: int, acuan: str) -> str:
     d = baru - lama
     if d > 0:
-        return f"Naik {d} poin dari {acuan} ({lama})"
+        return t(f"Naik {d} poin dari {acuan} ({lama})", f"Up {d} points from {acuan} ({lama})")
     if d < 0:
-        return f"Turun {-d} poin dari {acuan} ({lama})"
-    return f"Sama dengan {acuan} ({lama})"
+        return t(f"Turun {-d} poin dari {acuan} ({lama})", f"Down {-d} points from {acuan} ({lama})")
+    return t(f"Sama dengan {acuan} ({lama})", f"Same as {acuan} ({lama})")
 
 
 def teks_perubahan(pred_t1: float, pm25_hari_ini: float) -> str:
     """'Naik/Turun X poin dari hari terakhir (Y).' + saran kesehatan kategori t+1."""
     baru, lama = kategori_ispu(pred_t1)["nilai"], kategori_ispu(pm25_hari_ini)["nilai"]
-    return f"{_selisih(baru, lama, 'hari terakhir')}. {saran_kesehatan(pred_t1)}"
+    return f"{_selisih(baru, lama, t('hari terakhir', 'the latest day'))}. {saran_kesehatan(pred_t1)}"
 
 
 def teks_puncak(prediksi: pd.DataFrame) -> str:
@@ -58,61 +60,55 @@ def teks_puncak(prediksi: pd.DataFrame) -> str:
     r = prediksi.iloc[i]
     k_puncak, k_t1 = kategori_ispu(r["pm25"]), kategori_ispu(prediksi["pm25"].iloc[0])
     if i == 0:
-        return (f"Nilai tertinggi ada pada t+1 ({k_t1['nilai']} ISPU); "
-                "hari-hari berikutnya diperkirakan tidak melebihi nilai tersebut.")
-    awal = f"Puncak diperkirakan pada t+{int(r['horizon'])} ({tanggal_pendek(r['tanggal'])}) dengan {k_puncak['nilai']} ISPU"
+        return t(f"Nilai tertinggi ada pada t+1 ({k_t1['nilai']} ISPU); hari-hari berikutnya diperkirakan tidak "
+                 "melebihi nilai tersebut.",
+                 f"The highest value is at t+1 ({k_t1['nilai']} ISPU); the following days are not expected to "
+                 "exceed it.")
+    h, tgl, n = int(r["horizon"]), tanggal_pendek(r["tanggal"]), k_puncak["nilai"]
+    awal = t(f"Puncak diperkirakan pada t+{h} ({tgl}) dengan {n} ISPU", f"The peak is expected at t+{h} ({tgl}) "
+             f"with {n} ISPU")
     if k_puncak["kategori"] != k_t1["kategori"]:
-        return f"{awal}, melewati ambang kategori {k_puncak['kategori']}."
-    return f"{awal}; selama 7 hari kategori tetap {k_t1['kategori']} seperti t+1."
+        return t(f"{awal}, melewati ambang kategori {kategori(k_puncak['kategori'])}.",
+                 f"{awal}, crossing into the {kategori(k_puncak['kategori'])} category.")
+    return t(f"{awal}; selama 7 hari kategori tetap {kategori(k_t1['kategori'])} seperti t+1.",
+             f"{awal}; the category stays {kategori(k_t1['kategori'])} for all 7 days, as at t+1.")
 
 
 def teks_simulasi(pred_sim_t1: float, pred_akt_t1: float, perubahan: list[str]) -> str:
     """Kalimat hasil simulasi t+1 dibanding mode aktual + daftar variabel yang diubah."""
     baru, lama = kategori_ispu(pred_sim_t1)["nilai"], kategori_ispu(pred_akt_t1)["nilai"]
+    dan = t("dan", "and")
     if not perubahan:
-        return f"Sama dengan mode aktual ({lama}). Geser slider untuk mengubah nilai variabel."
+        return t(f"Sama dengan mode aktual ({lama}). Geser slider untuk mengubah nilai variabel.",
+                 f"Same as actual mode ({lama}). Move the sliders to change variable values.")
     if len(perubahan) > 3:
-        daftar = ", ".join(perubahan[:3]) + f", dan {len(perubahan) - 3} variabel lain diubah"
+        daftar = ", ".join(perubahan[:3]) + t(f", dan {len(perubahan) - 3} variabel lain diubah",
+                                              f", and {len(perubahan) - 3} other variables changed")
     elif len(perubahan) == 3:
-        daftar = ", ".join(perubahan[:2]) + f", dan {perubahan[2]}"
+        daftar = ", ".join(perubahan[:2]) + f", {dan} {perubahan[2]}"
     elif len(perubahan) == 2:
-        daftar = f"{perubahan[0]} dan {perubahan[1]}"
+        daftar = f"{perubahan[0]} {dan} {perubahan[1]}"
     else:
         daftar = perubahan[0]
     if baru == lama:
-        return f"Tetap sama dengan mode aktual ({lama}) meskipun {daftar}."
-    return f"{_selisih(baru, lama, 'mode aktual')}, setelah {daftar}."
+        return t(f"Tetap sama dengan mode aktual ({lama}) meskipun {daftar}.",
+                 f"Still the same as actual mode ({lama}) even though {daftar}.")
+    return t(f"{_selisih(baru, lama, 'mode aktual')}, setelah {daftar}.",
+             f"{_selisih(baru, lama, 'actual mode')}, after {daftar}.")
 
 
 def teks_bandingkan(akt: pd.DataFrame, sim: pd.DataFrame, horizon=(1, 4, 7)) -> str:
     bagian = [f"t+{h} {kategori_ispu(akt['pm25'].iloc[h - 1])['nilai']} → "
               f"{kategori_ispu(sim['pm25'].iloc[h - 1])['nilai']}" for h in horizon]
-    return "Perbandingan terhadap mode aktual: " + " · ".join(bagian)
+    return t("Perbandingan terhadap mode aktual: ", "Compared with actual mode: ") + " · ".join(bagian)
 
 
 def banner_simulasi() -> None:
-    st.html('<div class="banner"><span class="dot"></span><span>Hasil pada mode simulasi '
-            '<b>bukan prediksi kondisi sebenarnya</b>. Nilai variabel diatur oleh pengguna dan hanya '
-            'digunakan untuk mengamati pengaruh perubahan terhadap keluaran model.</span></div>')
-
-
-def kotak_7_horizon(prediksi: pd.DataFrame) -> None:
-    """Garis waktu t+1..t+7: titik di garis, nilai, kategori, dan meter kecil (skala 0–200 ISPU)."""
-    kotak = []
-    for _, r in prediksi.iterrows():
-        k = kategori_ispu(r["pm25"])
-        h = int(r["horizon"])
-        nama = "Tdk Sehat" if k["kategori"] == "Tidak Sehat" else k["kategori"]
-        isi = min(100, k["nilai"] / 2)
-        kotak.append(
-            f'<div class="hbox{" besok" if h == 1 else ""}"><span class="hDot"></span>'
-            f'<div class="d">{"Besok" if h == 1 else f"t+{h}"}</div>'
-            f'<div class="dt">{tanggal_pendek(r["tanggal"])}</div>'
-            f'<div class="n" style="color:{k["warna_teks"]}">{k["nilai"]}</div>'
-            f'<div class="k" style="background:{k["bg"]};color:{k["warna_teks"]}">{nama}</div>'
-            f'<div class="meter"><i style="width:{isi:.0f}%;background:{k["warna"]}"></i></div></div>'
-        )
-    st.html(f'<div class="h7">{"".join(kotak)}</div>')
+    st.html('<div class="banner"><span class="dot"></span><span>' + t(
+        "Hasil pada mode simulasi <b>bukan prediksi kondisi sebenarnya</b>. Nilai variabel diatur oleh pengguna dan "
+        "hanya digunakan untuk mengamati pengaruh perubahan terhadap keluaran model.",
+        "Simulation results are <b>not forecasts of real conditions</b>. Variable values are set by the user and "
+        "only used to observe how changes affect the model output.") + "</span></div>")
 
 
 def kpi(item: list[tuple[str, str, str]], ispu: list[float | None] | None = None) -> str:
@@ -129,3 +125,40 @@ def kpi(item: list[tuple[str, str, str]], ispu: list[float | None] | None = None
 def kosong(judul: str, teks: str) -> str:
     """Keadaan kosong (filter tanpa hasil, belum dihitung, dsb.)."""
     return f'<div class="simKosong"><b>{judul}</b><br>{teks}</div>'
+
+
+def panel_prediksi(judul: str, sub: str, badge: str, label_acuan: str, pm25_acuan: float,
+                   prediksi: pd.DataFrame, catatan: str, tanggal: bool = False) -> str:
+    """Papan hasil prediksi: kartu besar kondisi acuan + 7 kartu 'n hari ke depan' + legenda ISPU.
+
+    Dipakai Mode Aktual & Unggah Data (dengan tanggal) dan Mode Simulasi (tanpa tanggal, skenario hipotetis).
+    """
+    acuan = kategori_ispu(pm25_acuan)
+    kartu = []
+    for _, r in prediksi.iterrows():
+        ks = kategori_ispu(r["pm25"])
+        h = int(r["horizon"])
+        ke_depan = t(f"{h} hari ke depan", f"{h} day{'s' if h > 1 else ''} ahead")
+        tgl = f'<div class="psTgl">{tanggal_pendek(r["tanggal"], tahun=True)}</div>' if tanggal else ""
+        kartu.append(f'<div class="psKartu"><div class="psH">{ke_depan}</div>{tgl}'
+                     f'<div class="psN">{ks["nilai"]}<small>ISPU</small></div>{chip(r["pm25"])}</div>')
+    legenda = "".join(f'<span><span class="chip" style="background:{bg};color:{teks}">{kategori(nama)}</span> '
+                      f'{rentang}</span>' for _, nama, rentang, _, bg, teks in KATEGORI_ISPU)
+    return (f'<div class="papanSim"><div class="psKepala"><div><div class="psJudul">{judul}</div>'
+            f'<div class="psSub">{sub}</div></div>'
+            f'<span class="psBadge"><span class="psDenyut"></span>{badge}</span></div>'
+            f'<div class="psAcuan"><div class="psH">{label_acuan}</div>'
+            f'<div class="psN besar">{acuan["nilai"]}<small>ISPU</small></div>{chip(pm25_acuan)}</div>'
+            f'<div class="psGrid">{"".join(kartu)}</div><div class="psLegenda">{legenda}</div>'
+            f'<div class="psCatatan">{catatan}</div></div>')
+
+
+def panel_simulasi(stasiun: str, pm25_acuan: float, simulasi: pd.DataFrame, dijalankan: str | None) -> str:
+    """Papan Mode Simulasi; 'dijalankan' hanya waktu tombol Prediksi diklik."""
+    jalan = f" · {t('dijalankan', 'run on')} {dijalankan}" if dijalankan else ""
+    return panel_prediksi(t("Hasil Prediksi Simulasi", "Simulation Forecast"), f"{stasiun}{jalan}",
+                          t("SIMULASI", "SIMULATION"),
+                          t("PM2.5 hari ini (nilai yang Anda atur)", "Today's PM2.5 (the value you set)"),
+                          pm25_acuan, simulasi,
+                          t("Hasil simulasi bukan prediksi kondisi sebenarnya.",
+                            "Simulation results are not forecasts of real conditions."))

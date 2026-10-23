@@ -12,10 +12,11 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from .config import (FITUR, FITUR_METEOROLOGI, FITUR_POLUTAN, FITUR_SPASIAL, HORIZONS, LABEL_FITUR, STASIUN,
-                     kategori_ispu)
+from .config import (FITUR, FITUR_METEOROLOGI, FITUR_POLUTAN, FITUR_SPASIAL, HORIZONS, LABEL_FITUR,
+                     LABEL_FITUR_EN, STASIUN, kategori_ispu)
 from .inference import prediksi_7_hari, prediksi_batch
 from .preprocessing import KOLOM_LAG, KOLOM_TARGET, kondisi_terakhir, preprocess
+from .teks import tr
 
 KOLOM_WAJIB = ["tanggal", "stasiun"] + FITUR_POLUTAN + FITUR_METEOROLOGI
 KOLOM_ANGKA = FITUR_POLUTAN + FITUR_METEOROLOGI
@@ -48,7 +49,13 @@ class HasilUnggah:
 def _ringkas(pesan: list[str]) -> list[str]:
     if len(pesan) <= MAKS_PESAN:
         return pesan
-    return pesan[:MAKS_PESAN] + [f"… dan {len(pesan) - MAKS_PESAN} masalah sejenis lainnya."]
+    n = len(pesan) - MAKS_PESAN
+    return pesan[:MAKS_PESAN] + [tr(f"… dan {n} masalah sejenis lainnya.", f"… and {n} more similar issues.")]
+
+
+def _nama(f: str) -> str:
+    """Nama fitur untuk pesan, sesuai bahasa aktif."""
+    return tr(LABEL_FITUR[f][0], LABEL_FITUR_EN.get(f, LABEL_FITUR[f])[0])
 
 
 def _baris_excel(idx) -> str:
@@ -154,7 +161,8 @@ def baca_file(isi: bytes, nama_file: str) -> pd.DataFrame:
         try:
             return pd.read_excel(io.BytesIO(isi), sheet_name=0)
         except Exception as e:  # noqa: BLE001
-            raise ValueError(f"File Excel tidak dapat dibaca ({e}). Pastikan file berformat .xlsx.") from e
+            raise ValueError(tr(f"File Excel tidak dapat dibaca ({e}). Pastikan file berformat .xlsx.",
+                                f"The Excel file could not be read ({e}). Make sure it is an .xlsx file.")) from e
     if nama.endswith(".csv"):
         for enc in ("utf-8-sig", "cp1252"):
             try:
@@ -163,7 +171,8 @@ def baca_file(isi: bytes, nama_file: str) -> pd.DataFrame:
             except UnicodeDecodeError:
                 continue
         else:
-            raise ValueError("File CSV tidak dapat dibaca: encoding tidak dikenali (gunakan UTF-8).")
+            raise ValueError(tr("File CSV tidak dapat dibaca: encoding tidak dikenali (gunakan UTF-8).",
+                                "The CSV file could not be read: unknown encoding (use UTF-8)."))
         baris_awal = teks.splitlines()[0] if teks.strip() else ""
         try:
             pemisah = csv.Sniffer().sniff(baris_awal, delimiters=",;\t").delimiter
@@ -171,7 +180,8 @@ def baca_file(isi: bytes, nama_file: str) -> pd.DataFrame:
             pemisah = ";" if baris_awal.count(";") > baris_awal.count(",") else ","
         # semua dibaca sebagai teks; angka berdesimal koma diubah di validasi()
         return pd.read_csv(io.StringIO(teks), sep=pemisah, dtype=str, keep_default_na=True)
-    raise ValueError("Format file tidak didukung. Unggah file .xlsx atau .csv.")
+    raise ValueError(tr("Format file tidak didukung. Unggah file .xlsx atau .csv.",
+                        "Unsupported file format. Upload an .xlsx or .csv file."))
 
 
 # ---------------------------------------------------------------------
@@ -184,7 +194,7 @@ def validasi(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str], list
     df.columns = [str(c).strip().lower() for c in df.columns]
     df = df.dropna(how="all")
     if df.empty:
-        return None, ["File tidak berisi data."], info
+        return None, [tr("File tidak berisi data.", "The file contains no data.")], info
 
     # --- kolom ---
     kurang = [k for k in KOLOM_WAJIB if k not in df.columns]
@@ -193,18 +203,23 @@ def validasi(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str], list
         saran = []
         for k in kurang:
             mirip = difflib.get_close_matches(k, lain, n=1, cutoff=0.6)
-            saran.append(f"<code>{k}</code>" + (f" (mungkin tertulis <code>{mirip[0]}</code>?)" if mirip else ""))
-        error.append(f"Kolom wajib tidak ditemukan: {', '.join(saran)}. Gunakan nama kolom sesuai template.")
+            mungkin = tr(f" (mungkin tertulis <code>{mirip[0]}</code>?)", f" (perhaps written as <code>{mirip[0]}</code>?)")
+            saran.append(f"<code>{k}</code>" + (mungkin if mirip else ""))
+        error.append(tr(f"Kolom wajib tidak ditemukan: {', '.join(saran)}. Gunakan nama kolom sesuai template.",
+                        f"Required columns not found: {', '.join(saran)}. Use the column names from the template."))
         return None, error, info
     ekstra = [c for c in df.columns if c not in KOLOM_WAJIB]
     if ekstra:
         abai_spasial = [c for c in ekstra if c in FITUR_SPASIAL]
         abai_lain = [c for c in ekstra if c not in FITUR_SPASIAL]
         if abai_spasial:
-            info.append("Kolom kepadatan penduduk/luas RTH pada file diabaikan; aplikasi memakai nilai tahun "
-                        "terakhir dari dataset.")
+            info.append(tr("Kolom kepadatan penduduk/luas RTH pada file diabaikan; aplikasi memakai nilai tahun "
+                           "terakhir dari dataset.",
+                           "Population density/green open space columns in the file are ignored; the app uses "
+                           "the latest year from the dataset."))
         if abai_lain:
-            info.append(f"Kolom tambahan diabaikan: {', '.join(abai_lain)}.")
+            info.append(tr(f"Kolom tambahan diabaikan: {', '.join(abai_lain)}.",
+                           f"Extra columns ignored: {', '.join(abai_lain)}."))
     df = df[KOLOM_WAJIB]
 
     # --- tanggal ---
@@ -217,11 +232,15 @@ def validasi(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str], list
                 tanggal.append(pd.Timestamp(v.strip()[:10]))
             except ValueError:
                 tanggal.append(pd.NaT)
-                salah.append(f"Baris {_baris_excel(idx)}: tanggal '{v}' tidak valid.")
+                salah.append(tr(f"Baris {_baris_excel(idx)}: tanggal '{v}' tidak valid.",
+                                f"Row {_baris_excel(idx)}: invalid date '{v}'."))
         else:
             tanggal.append(pd.NaT)
-            salah.append(f"Baris {_baris_excel(idx)}: tanggal '{'' if pd.isna(v) else v}' tidak valid. "
-                         "Gunakan format YYYY-MM-DD, contoh 2025-11-08.")
+            isi = "" if pd.isna(v) else v
+            salah.append(tr(f"Baris {_baris_excel(idx)}: tanggal '{isi}' tidak valid. Gunakan format YYYY-MM-DD, "
+                            "contoh 2025-11-08.",
+                            f"Row {_baris_excel(idx)}: invalid date '{isi}'. Use the YYYY-MM-DD format, e.g. "
+                            "2025-11-08."))
     error += _ringkas(salah)
     df["tanggal"] = tanggal
 
@@ -230,10 +249,12 @@ def validasi(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str], list
     asli = df["stasiun"].copy()
     df["stasiun"] = asli.map(lambda v: peta.get(" ".join(str(v).lower().split())) if pd.notna(v) else None)
     tak_dikenal = df["stasiun"].isna()
-    salah_st = asli[tak_dikenal].fillna("(kosong)").astype(str)
+    salah_st = asli[tak_dikenal].fillna(tr("(kosong)", "(empty)")).astype(str)
+    pilihan = ", ".join(f"{s} / {s.split()[0]}" for s in STASIUN)
     for nilai, grup in salah_st.groupby(salah_st, sort=False):
-        error.append(f"Stasiun '{nilai}' tidak dikenal (baris {_daftar_baris(grup.index)}). Pilihan: "
-                     + ", ".join(f"{s} / {s.split()[0]}" for s in STASIUN) + ".")
+        baris = _daftar_baris(grup.index)
+        error.append(tr(f"Stasiun '{nilai}' tidak dikenal (baris {baris}). Pilihan: {pilihan}.",
+                        f"Unknown station '{nilai}' (row {baris}). Options: {pilihan}."))
 
     # --- angka ---
     salah = []
@@ -241,10 +262,15 @@ def validasi(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str], list
         hasil = pd.Series([_ke_angka(v) for v in df[kol]], index=df.index, dtype=object)
         tidak_valid = hasil.eq(_TIDAK_VALID)
         for idx in hasil[tidak_valid].index:
-            salah.append(f"Baris {_baris_excel(idx)}, kolom <code>{kol}</code>: '{df.at[idx, kol]}' bukan angka.")
+            salah.append(tr(f"Baris {_baris_excel(idx)}, kolom <code>{kol}</code>: '{df.at[idx, kol]}' bukan angka.",
+                            f"Row {_baris_excel(idx)}, column <code>{kol}</code>: '{df.at[idx, kol]}' is not a "
+                            "number."))
         hasil = pd.to_numeric(hasil.mask(tidak_valid), errors="coerce")
         for idx in hasil[hasil < 0].index:
-            salah.append(f"Baris {_baris_excel(idx)}, kolom <code>{kol}</code>: nilai negatif ({_g(hasil[idx])}) tidak valid.")
+            salah.append(tr(f"Baris {_baris_excel(idx)}, kolom <code>{kol}</code>: nilai negatif "
+                            f"({_g(hasil[idx])}) tidak valid.",
+                            f"Row {_baris_excel(idx)}, column <code>{kol}</code>: negative value "
+                            f"({_g(hasil[idx])}) is not valid."))
         df[kol] = hasil
     error += _ringkas(salah)
     if error:
@@ -256,27 +282,38 @@ def validasi(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str], list
         dup = g[g["tanggal"].duplicated(keep=False)]
         if not dup.empty:
             tgl = sorted({_tgl(t) for t in dup["tanggal"]})
-            error.append(f"{st_nama}: tanggal duplikat {', '.join(tgl)} (baris {_daftar_baris(dup.index)}).")
+            error.append(tr(f"{st_nama}: tanggal duplikat {', '.join(tgl)} (baris {_daftar_baris(dup.index)}).",
+                            f"{st_nama}: duplicate dates {', '.join(tgl)} (rows {_daftar_baris(dup.index)})."))
             continue
         selisih = g["tanggal"].diff().dt.days
         for i in selisih[selisih > 1].index:
             sebelum = g["tanggal"].shift(1)[i]
-            error.append(f"{st_nama}: tanggal bolong antara {_tgl(sebelum)} dan {_tgl(g.at[i, 'tanggal'])}. "
-                         "Data harus berurutan setiap hari.")
+            a, b = _tgl(sebelum), _tgl(g.at[i, "tanggal"])
+            error.append(tr(f"{st_nama}: tanggal bolong antara {a} dan {b}. Data harus berurutan setiap hari.",
+                            f"{st_nama}: missing dates between {a} and {b}. Data must be consecutive days."))
         if len(g) < MIN_HARI:
-            error.append(f"{st_nama}: hanya {len(g)} hari data; minimal {MIN_HARI} hari berturut-turut "
-                         "(hari terakhir + 3 hari sebelumnya untuk lag PM2.5).")
+            error.append(tr(f"{st_nama}: hanya {len(g)} hari data; minimal {MIN_HARI} hari berturut-turut "
+                            "(hari terakhir + 3 hari sebelumnya untuk lag PM2.5).",
+                            f"{st_nama}: only {len(g)} days of data; at least {MIN_HARI} consecutive days are "
+                            "needed (the last day + 3 previous days for the PM2.5 lags)."))
             continue
         akhir = g.tail(MIN_HARI)
         kosong = akhir[akhir["pm25"].isna()]
         if not kosong.empty:
-            error.append(f"{st_nama}: PM2.5 kosong pada {', '.join(_tgl(t) for t in kosong['tanggal'])}. "
-                         f"PM2.5 wajib terisi pada {MIN_HARI} hari terakhir karena dipakai untuk lag dan rata-rata 3 hari.")
+            tgl_kosong = ", ".join(_tgl(t) for t in kosong["tanggal"])
+            error.append(tr(f"{st_nama}: PM2.5 kosong pada {tgl_kosong}. PM2.5 wajib terisi pada {MIN_HARI} hari "
+                            "terakhir karena dipakai untuk lag dan rata-rata 3 hari.",
+                            f"{st_nama}: PM2.5 is empty on {tgl_kosong}. PM2.5 must be filled for the last "
+                            f"{MIN_HARI} days because it is used for the lags and the 3-day average."))
         terakhir = g.iloc[-1]
         meteo_kosong = [k for k in FITUR_METEOROLOGI if pd.isna(terakhir[k])]
         if meteo_kosong:
-            error.append(f"{st_nama}: data meteorologi hari terakhir ({_tgl(terakhir['tanggal'])}) kosong pada kolom "
-                         f"{', '.join(f'<code>{k}</code>' for k in meteo_kosong)}. Meteorologi hari terakhir wajib diisi.")
+            kol = ", ".join(f"<code>{k}</code>" for k in meteo_kosong)
+            tgl_akhir = _tgl(terakhir["tanggal"])
+            error.append(tr(f"{st_nama}: data meteorologi hari terakhir ({tgl_akhir}) kosong pada kolom {kol}. "
+                            "Meteorologi hari terakhir wajib diisi.",
+                            f"{st_nama}: weather data for the last day ({tgl_akhir}) is empty in columns {kol}. "
+                            "Weather for the last day is required."))
     if error:
         return None, error, info
     return df.reset_index(drop=True), error, info
@@ -301,7 +338,8 @@ def proses(mentah: pd.DataFrame, models: dict, dataset: pd.DataFrame, rentang: p
     spasial = nilai_spasial_terakhir(dataset)
     data = data.join(spasial, on="stasiun")
     tahun = int(dataset["tanggal"].dt.year.max())
-    hasil.info.append(f"Kepadatan penduduk & luas RTH memakai nilai tahun {tahun} dari dataset.")
+    hasil.info.append(tr(f"Kepadatan penduduk & luas RTH memakai nilai tahun {tahun} dari dataset.",
+                         f"Population density & green open space use the {tahun} values from the dataset."))
     siap = preprocess(data)  # ffill limit=7, lag 1–3, roll3, bulan, hari — identik dengan training
 
     semua, polutan_kosong, luar = [], [], []
@@ -314,22 +352,29 @@ def proses(mentah: pd.DataFrame, models: dict, dataset: pd.DataFrame, rentang: p
         semua.append(pred)
 
         tgl = _tgl(baris["tanggal"])
-        kosong = [LABEL_FITUR[f][0] for f in FITUR_POLUTAN if pd.isna(baris[f])]
+        kosong = [_nama(f) for f in FITUR_POLUTAN if pd.isna(baris[f])]
         if kosong:
-            polutan_kosong.append(f"{st_nama} ({tgl}): {', '.join(kosong)} kosong — ditampilkan sebagai "
-                                  "\"data tidak tersedia\" dan diproses model sebagai nilai kosong.")
+            polutan_kosong.append(tr(f"{st_nama} ({tgl}): {', '.join(kosong)} kosong — ditampilkan sebagai "
+                                     "\"data tidak tersedia\" dan diproses model sebagai nilai kosong.",
+                                     f"{st_nama} ({tgl}): {', '.join(kosong)} empty — shown as \"data not "
+                                     "available\" and processed by the model as missing values."))
         for f in FITUR:
             if f in FITUR_SPASIAL or f in ("bulan", "hari") or pd.isna(baris[f]):
                 continue
             lo, hi = rentang.loc[f, "min"], rentang.loc[f, "max"]
             if not lo <= baris[f] <= hi:
-                luar.append(f"{st_nama} ({tgl}): {LABEL_FITUR[f][0]} = {_g(baris[f])} di luar rentang dataset "
-                            f"({_g(lo)}–{_g(hi)}).")
+                luar.append(tr(f"{st_nama} ({tgl}): {_nama(f)} = {_g(baris[f])} di luar rentang dataset "
+                               f"({_g(lo)}–{_g(hi)}).",
+                               f"{st_nama} ({tgl}): {_nama(f)} = {_g(baris[f])} is outside the dataset range "
+                               f"({_g(lo)}–{_g(hi)})."))
     hasil.peringatan += polutan_kosong
     if luar:
         hasil.peringatan += _ringkas(luar)
-        hasil.peringatan.append("Model berbasis pohon keputusan tidak dapat mengekstrapolasi: nilai di luar rentang "
-                                "diperlakukan seperti nilai di batas rentang, sehingga prediksi perlu dibaca hati-hati.")
+        hasil.peringatan.append(tr("Model berbasis pohon keputusan tidak dapat mengekstrapolasi: nilai di luar "
+                                   "rentang diperlakukan seperti nilai di batas rentang, sehingga prediksi perlu "
+                                   "dibaca hati-hati.",
+                                   "Tree-based models cannot extrapolate: values outside the range are treated like "
+                                   "values at the range limit, so read the forecast with care."))
 
     pred = pd.concat(semua, ignore_index=True)
     pred["kategori"] = pred["pm25"].map(lambda v: kategori_ispu(v)["kategori"])

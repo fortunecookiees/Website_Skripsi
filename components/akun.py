@@ -7,6 +7,10 @@ import streamlit as st
 
 from auth.supabase import AuthError, KlienAuth, Sesi, cek_key
 
+from core.teks import terjemah
+
+from .bahasa import t
+
 KUNCI_SESI = "sesi_akun"
 KUNCI_TUJUAN = "akun_setelah_masuk"   # halaman tujuan setelah berhasil masuk
 KUNCI_MODE = "akun_mode"              # "Masuk" / "Daftar"
@@ -23,11 +27,12 @@ def _klien() -> tuple[KlienAuth | None, str | None]:
         cfg = st.secrets["supabase"]
         url, key = str(cfg["url"]).strip(), str(cfg["key"]).strip()
     except Exception:  # noqa: BLE001 — file/bagian/kunci tidak ada
-        return None, "Fitur akun belum dikonfigurasi (secrets Supabase belum diisi)."
+        return None, t("Fitur akun belum dikonfigurasi (secrets Supabase belum diisi).",
+                       "Accounts are not configured yet (Supabase secrets are empty).")
     if not url.startswith("https://"):
-        return None, "URL Supabase pada secrets tidak valid."
+        return None, t("URL Supabase pada secrets tidak valid.", "The Supabase URL in secrets is invalid.")
     if (masalah := cek_key(key)) is not None:
-        return None, masalah
+        return None, terjemah(masalah)
     return KlienAuth(url, key), None
 
 
@@ -57,7 +62,8 @@ def pengguna_aktif() -> Sesi | None:
         return sesi
     except AuthError:
         st.session_state.pop(KUNCI_SESI, None)
-        st.session_state[KUNCI_PESAN] = "Sesi Anda telah berakhir. Silakan masuk kembali."
+        st.session_state[KUNCI_PESAN] = t("Sesi Anda telah berakhir. Silakan masuk kembali.",
+                                          "Your session has ended. Please sign in again.")
         return None
 
 
@@ -68,7 +74,7 @@ def keluar() -> None:
         k.keluar(sesi.access_token)
     st.session_state.pop("riwayat_unggah", None)  # riwayat milik sesi akun ini
     st.session_state.pop("akun_menu_admin", None)
-    st.session_state[KUNCI_PESAN] = "Anda telah keluar."
+    st.session_state[KUNCI_PESAN] = t("Anda telah keluar.", "You have signed out.")
 
 
 def _ke_akun(mode: str, tujuan: str) -> None:
@@ -76,26 +82,37 @@ def _ke_akun(mode: str, tujuan: str) -> None:
     st.session_state[KUNCI_TUJUAN] = tujuan
 
 
-def wajib_masuk(tujuan: str, nama_fitur: str) -> Sesi:
+def wajib_masuk(tujuan: str, nama_fitur: str, manfaat: list[str] | None = None) -> Sesi:
     """Gerbang halaman: jika belum masuk tampilkan ajakan masuk/daftar lalu hentikan halaman."""
     sesi = pengguna_aktif()
     if sesi is not None:
         return sesi
     masalah = masalah_konfigurasi()
-    with st.container(key="card_ajakan_masuk"):
-        st.html('<div class="cardTitle">Perlu masuk <em>akun</em></div>'
-                f'<div class="langkah">Fitur <b>{nama_fitur}</b> hanya tersedia untuk pengguna yang sudah masuk. '
-                'Halaman Dashboard, Data Historis, Evaluation, dan Information tetap dapat dibuka tanpa akun.</div>')
+    daftar = "".join(f"<li>{m}</li>" for m in manfaat or [])
+    _, tengah, _ = st.columns([1, 1.6, 1])  # kartu di tengah, seperti halaman Masuk / Daftar
+    with tengah, st.container(key="card_ajakan_masuk"):
+        sub = t("Setelah masuk, Anda dapat:", "After signing in, you can:")
+        st.html('<div class="ajakan"><div class="ajIkon"><span class="material-symbols-rounded">lock</span></div>'
+                f'<div class="ajJudul">{t("Perlu masuk", "Sign-in required")}</div><p class="ajTeks">'
+                + t(f"Fitur <b>{nama_fitur}</b> hanya tersedia untuk pengguna yang sudah masuk. Dashboard, Data "
+                    "Historis, Evaluation, dan Information tetap dapat dibuka tanpa akun.",
+                    f"<b>{nama_fitur}</b> is only available to signed-in users. Dashboard, Historical Data, "
+                    "Evaluation, and Information remain open without an account.") + '</p>'
+                + (f'<div class="ajSub">{sub}</div><ol class="ajList">{daftar}</ol>' if daftar else "")
+                + '</div>')
         if masalah:
             st.html(f'<div class="note">{masalah}</div>')
         else:
-            c1, c2, _ = st.columns([1, 1, 3])
-            if c1.button("Masuk", key="ajakan_masuk", type="primary"):
+            c1, c2 = st.columns(2, gap="small")
+            if c1.button(t("Masuk", "Sign in"), key="ajakan_masuk", type="primary", icon=":material/login:", width="stretch"):
                 _ke_akun("Masuk", tujuan)
                 st.switch_page(HALAMAN_AKUN)
-            if c2.button("Daftar akun baru", key="ajakan_daftar"):
+            if c2.button(t("Daftar akun baru", "Create account"), key="ajakan_daftar", icon=":material/person_add:", width="stretch"):
                 _ke_akun("Daftar", tujuan)
                 st.switch_page(HALAMAN_AKUN)
+            st.html('<div class="ajCatatan">' + t("Daftar cukup dengan nama, email, dan password",
+                                                  "Registration only needs a name, email, and password")
+                    + '</div>')
     st.stop()
 
 
@@ -105,9 +122,10 @@ def blok_sidebar() -> None:
     if sesi is None:
         return
     inisial = escape((sesi.nama.strip()[:1] or "?").upper())
-    st.html(f'<div class="akunBox"><div class="avatar">{inisial}</div><div class="akunTeks"><span>Masuk sebagai</span>'
+    st.html(f'<div class="akunBox"><div class="avatar">{inisial}</div><div class="akunTeks">'
+            f'<span>{t("Masuk sebagai", "Signed in as")}</span>'
             f'<b>{escape(sesi.nama)}</b><span>{escape(sesi.email)}</span></div></div>')
-    st.button("Keluar", key="tombol_keluar", on_click=keluar)
+    st.button(t("Keluar", "Sign out"), key="tombol_keluar", on_click=keluar, icon=":material/logout:", width="stretch")
 
 
 KUNCI_MENU_ADMIN = "akun_menu_admin"   # (waktu cek, token, admin?) — HANYA untuk tampilan menu
@@ -122,9 +140,9 @@ def klien_admin():
         url, key = str(cfg["url"]).strip(), str(cfg.get("service_key", "")).strip()
         bucket = str(cfg.get("bucket", "data-dashboard")).strip() or "data-dashboard"
     except Exception:  # noqa: BLE001
-        return None, "Secrets Supabase belum diisi."
+        return None, t("Secrets Supabase belum diisi.", "Supabase secrets are empty.")
     if (masalah := cek_service_key(key)) is not None:
-        return None, masalah
+        return None, terjemah(masalah)
     return (KlienAdmin(url, key), bucket), None
 
 
@@ -158,8 +176,10 @@ def wajib_admin(tujuan: str):
     wajib_masuk(tujuan, "Admin")
     profil = verifikasi_admin()
     if profil is None:
-        st.html('<div class="errBox"><b class="h">Akses ditolak</b>Halaman ini hanya untuk akun dengan peran '
-                'admin. Peran diatur oleh pengelola melalui dashboard Supabase.</div>')
+        st.html(f'<div class="errBox"><b class="h">{t("Akses ditolak", "Access denied")}</b>' + t(
+            "Halaman ini hanya untuk akun dengan peran admin. Peran diatur oleh pengelola melalui dashboard Supabase.",
+            "This page is only for accounts with the admin role. Roles are set by the maintainer in the Supabase "
+            "dashboard.") + '</div>')
         st.stop()
     return profil
 

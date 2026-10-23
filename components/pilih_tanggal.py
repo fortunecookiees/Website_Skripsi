@@ -2,6 +2,7 @@
 import pandas as pd
 import streamlit as st
 
+from .bahasa import t
 from .format import tanggal_panjang
 
 
@@ -18,9 +19,9 @@ def pilih_tanggal(daftar: list[pd.Timestamp], prefix: str):
     i = daftar.index(st.session_state[kunci])
     c1, c2, c3, c4 = st.columns([0.35, 2.2, 0.35, 5], vertical_alignment="center", gap="small")
     c1.button("‹", key=f"{prefix}_geser_mundur", on_click=_geser, args=(kunci, daftar, -1), disabled=i == 0,
-              help="Tanggal sebelumnya")
+              help=t("Tanggal sebelumnya", "Previous date"))
     c2.selectbox("Tanggal acuan", daftar, key=kunci, format_func=tanggal_panjang,
                  label_visibility="collapsed")
     c3.button("›", key=f"{prefix}_geser_maju", on_click=_geser, args=(kunci, daftar, 1),
-              disabled=i == len(daftar) - 1, help="Tanggal berikutnya")
+              disabled=i == len(daftar) - 1, help=t("Tanggal berikutnya", "Next date"))
     return st.session_state[kunci], c4

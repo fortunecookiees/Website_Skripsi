@@ -14,6 +14,8 @@ from urllib.parse import quote, urlparse
 
 import requests
 
+from core.teks import terjemah
+
 from .supabase import PERAN_ADMIN, peran_dari
 
 BAN_PERMANEN = "876000h"   # ±100 tahun
@@ -29,6 +31,7 @@ class AdminError(Exception):
     """Kesalahan aksi admin dengan pesan aman untuk ditampilkan (tanpa key/URL internal)."""
 
     def __init__(self, pesan: str, status: int | None = None):
+        pesan = terjemah(pesan)
         super().__init__(pesan)
         self.pesan, self.status = pesan, status
 
@@ -58,9 +61,9 @@ def cek_service_key(key: str) -> str | None:
 def boleh_diubah(id_admin: str, target: "Pengguna") -> str | None:
     """Alasan penolakan jika target tidak boleh dinonaktifkan/dihapus dari aplikasi, None jika boleh."""
     if target.id == id_admin:
-        return "Anda tidak dapat menonaktifkan atau menghapus akun Anda sendiri."
+        return terjemah("Anda tidak dapat menonaktifkan atau menghapus akun Anda sendiri.")
     if target.peran == PERAN_ADMIN:
-        return "Akun admin hanya dapat diubah melalui dashboard Supabase."
+        return terjemah("Akun admin hanya dapat diubah melalui dashboard Supabase.")
     return None
 
 

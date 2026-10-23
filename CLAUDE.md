@@ -21,7 +21,7 @@ train/training.py                                # kode training asli (ACUAN pre
 - **Spasial** (variabel yang diteliti, beri penanda khusus di UI): kepadatan_penduduk_jiwa_km2, luas_rth_km2
 - **Meteorologi**: suhu_c, kelembapan_pct, curah_hujan_mm, tutupan_awan_pct, kecepatan_angin_kmh, tekanan_hpa, arah_angin_deg
 - **Polutan** (indeks ISPU): pm10, pm25, so2, co, o3, no2
-- **Turunan** (dihitung otomatis, TIDAK bisa diubah user): pm25_lag1, pm25_lag2, pm25_lag3, pm25_roll3, bulan, hari
+- **Turunan** (dihitung otomatis, TIDAK bisa diubah user lewat slider): pm25_lag1, pm25_lag2, pm25_lag3, pm25_roll3, bulan, hari. Pengecualian: toggle riwayat PM2.5 di Mode Simulasi (lihat Modul Dashboard)
 
 ## Preprocessing di app (harus identik dengan training)
 
@@ -63,6 +63,7 @@ Warna **hanya** dipakai untuk kategori ISPU. Elemen lain pakai warna netral.
 - Panel input 21 fitur dikelompokkan: spasial (dengan penanda), meteorologi, polutan, turunan
 - **Mode Prediksi Aktual**: semua nilai dikunci ke kondisi terakhir dataset (8 Nov 2025), prediksi 9–15 Nov 2025
 - **Mode Simulasi**: spasial, meteorologi, dan polutan bisa diubah, sedangkan fitur turunan tetap terkunci. Tampilkan tabel perbandingan aktual vs simulasi + disclaimer "hasil simulasi bukan prediksi kondisi sebenarnya"
+  - Toggle "Samakan PM2.5 3 hari sebelumnya dengan nilai hari ini" (default mati). Mati: lag & rolling dari data historis. Nyala: pm25_lag1..lag3 = slider PM2.5, pm25_roll3 = rata-rata ketiganya (`core/simulasi.py`). Bulan & hari tetap dari kondisi acuan. Model & preprocessing tidak berubah
 - Output: nilai PM2.5 t+1..t+7 + kategori & warna ISPU, grafik 7 hari
 - Ringkasan status kelima stasiun (prediksi t+1 tiap stasiun)
 - Peta interaktif lokasi 5 SPKU
@@ -88,4 +89,4 @@ Warna **hanya** dipakai untuk kategori ISPU. Elemen lain pakai warna netral.
 - Kerjakan **bertahap**. Setelah tiap tahap selesai, berhenti dan tunggu konfirmasi sebelum lanjut.
 - Jangan ubah file di `models/`, `data/`, dan `train/`.
 - Kode rapi dan modular: logika preprocessing & inference dipisah dari UI.
-- Teks UI dalam Bahasa Indonesia.
+- Teks UI dalam Bahasa Indonesia (default), dengan pilihan English lewat pemilih ID/EN di sidebar. Tulis teks berpasangan `t("Indonesia", "English")` dari `components/bahasa.py`; `core/` tidak memakai Streamlit (bila perlu, terima parameter `en`).

@@ -11,23 +11,25 @@ from core.preprocessing import data_evaluasi, kondisi_terakhir, muat_dataset, pr
 from core.unggah import buat_template
 from core.versi_data import SumberDashboard, label_sumber, muat_data_dashboard
 
+from .bahasa import inggris
 
-@st.cache_resource(show_spinner="Memuat model…")
+
+@st.cache_resource(show_spinner=False)
 def model() -> dict:
     return muat_model()
 
 
-@st.cache_data(show_spinner="Memuat dataset…")
+@st.cache_data(show_spinner=False)
 def dataset_mentah() -> pd.DataFrame:
     return muat_dataset()
 
 
-@st.cache_data(show_spinner="Memuat dataset…")
+@st.cache_data(show_spinner=False)
 def dataset() -> pd.DataFrame:
     return preprocess(dataset_mentah())
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def tanggal_terakhir() -> pd.Timestamp:
     return dataset()["tanggal"].max()
 
@@ -36,7 +38,7 @@ def tanggal_terakhir() -> pd.Timestamp:
 # Data Dashboard (Mode Aktual & titik awal simulasi): versi aktif admin, atau dataset penelitian.
 # Evaluation, Data Historis, dan rentang slider TETAP memakai dataset() penelitian.
 # ---------------------------------------------------------------------
-@st.cache_data(ttl=300, show_spinner="Memuat data dashboard…")
+@st.cache_data(ttl=300, show_spinner=False)
 def _dashboard() -> tuple[pd.DataFrame, SumberDashboard]:
     from components.akun import klien_admin  # impor lokal: hindari impor melingkar
     konfigurasi, _ = klien_admin()
@@ -57,7 +59,7 @@ def kunci_dashboard() -> str:
 
 
 def label_sumber_dashboard() -> str:
-    return label_sumber(sumber_dashboard(), tanggal_terakhir())
+    return label_sumber(sumber_dashboard(), tanggal_terakhir(), en=inggris())
 
 
 def tanggal_terakhir_dashboard() -> pd.Timestamp:
@@ -89,19 +91,19 @@ def segarkan_dashboard() -> None:
     _dashboard.clear()
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def rentang_fitur() -> pd.DataFrame:
     """Nilai min & maks tiap fitur di seluruh dataset (batas slider)."""
     return dataset()[FITUR].agg(["min", "max"]).T
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def periode_uji() -> tuple[pd.Timestamp, pd.Timestamp, int]:
     uji, batas = data_evaluasi(dataset())
     return batas, uji["tanggal"].max(), len(uji)
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def data_uji() -> pd.DataFrame:
     """Data uji (replikasi split training), tanpa prediksi; prediksi dihitung saat tombol Prediksi diklik."""
     uji, _ = data_evaluasi(dataset())
@@ -121,32 +123,32 @@ def prediksi_uji_panjang() -> pd.DataFrame:
     return bentuk_panjang(pd.concat([uji, prediksi_batch(model(), uji)], axis=1))
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def hasil_evaluasi() -> dict:
     with open(EVAL_PATH, encoding="utf-8") as f:
         return json.load(f)
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def feature_importance(horizon: int = 1) -> pd.Series:
     """Importance (gain, bawaan xgboost) model horizon tertentu, urut menurun."""
     m = model()[horizon]["model"]
     return pd.Series(m.feature_importances_, index=FITUR).sort_values(ascending=False)
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def hasil_skenario() -> dict:
     with open(SKENARIO_PATH, encoding="utf-8") as f:
         return json.load(f)
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def rentang_tanggal() -> tuple[pd.Timestamp, pd.Timestamp]:
     t = dataset()["tanggal"]
     return t.min(), t.max()
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def nilai_spasial() -> pd.DataFrame:
     """Kepadatan & luas RTH per stasiun per tahun (nilai pertama tiap tahun, seperti cek di training)."""
     d = dataset()
@@ -159,7 +161,7 @@ def template_unggah() -> bytes:
     return buat_template(dataset_mentah())
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def titik_rth() -> pd.DataFrame:
     """Titik RTH yang lokasinya terverifikasi (presisi objek/manual) dari data/rth_koordinat.csv.
 

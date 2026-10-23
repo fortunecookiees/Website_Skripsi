@@ -66,6 +66,24 @@ LABEL_FITUR = {
     "bulan": ("Bulan", "1–12"),
     "hari": ("Hari dalam minggu", "0=Senin … 6=Minggu"),
 }
+# versi bahasa Inggris (yang tidak tercantum sama dengan LABEL_FITUR, mis. PM10, SO₂)
+LABEL_FITUR_EN = {
+    "kepadatan_penduduk_jiwa_km2": ("Population density", "people/km²"),
+    "luas_rth_km2": ("Green open space area", "km²"),
+    "suhu_c": ("Temperature", "°C"),
+    "kelembapan_pct": ("Humidity", "%"),
+    "curah_hujan_mm": ("Rainfall", "mm"),
+    "tutupan_awan_pct": ("Cloud cover", "%"),
+    "kecepatan_angin_kmh": ("Wind speed", "km/h"),
+    "tekanan_hpa": ("Air pressure", "hPa"),
+    "arah_angin_deg": ("Wind direction", "°"),
+    "pm25_lag1": ("PM2.5 1 day before", "ISPU"),
+    "pm25_lag2": ("PM2.5 2 days before", "ISPU"),
+    "pm25_lag3": ("PM2.5 3 days before", "ISPU"),
+    "pm25_roll3": ("Mean PM2.5 of the previous 3 days", "ISPU"),
+    "bulan": ("Month", "1–12"),
+    "hari": ("Day of week", "0=Monday … 6=Sunday"),
+}
 
 # ---------------------------------------------------------------------
 # Kategori ISPU (PermenLHK No. 14/2020)
