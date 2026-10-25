@@ -248,19 +248,20 @@ def panduan() -> None:
 
 
 def manual_program() -> None:
-    """Tombol unduh assets/manual_program.pdf; jika berkas belum ada, tampilkan info tanpa tombol."""
+    """Tombol unduh assets/manual_program.pdf; tombol tetap tampil (nonaktif) selama berkas belum ada."""
     with st.container(key="card_manual"):
         st.html('<div class="pdIkon"><span class="material-symbols-rounded">menu_book</span></div>'
                 f'<div class="pdJudul">{t("Manual Program", "User Manual")}</div><p class="pdIsi">'
                 + t("Panduan lengkap dalam format PDF, berisi langkah penggunaan setiap halaman beserta tampilannya.",
                     "The complete guide in PDF, with usage steps and screenshots for every page.") + "</p>")
-        if MANUAL_PATH.is_file():
-            st.download_button(t("Unduh Manual Program (PDF)", "Download User Manual (PDF)"), MANUAL_PATH.read_bytes(),
-                               file_name="Manual_Program_NafasKota.pdf", mime="application/pdf",
-                               icon=":material/download:", key="unduh_manual", width="stretch")
-        else:
-            st.html('<div class="infoBox"><span class="dot"></span><span>'
-                    + t("Manual program belum tersedia.", "The user manual is not available yet.") + "</span></div>")
+        ada = MANUAL_PATH.is_file()
+        st.download_button(t("Unduh Manual Program (PDF)", "Download User Manual (PDF)"),
+                           MANUAL_PATH.read_bytes() if ada else b"", file_name="Manual_Program_NafasKota.pdf",
+                           mime="application/pdf", icon=":material/download:", key="unduh_manual", width="stretch",
+                           disabled=not ada)
+        if not ada:
+            st.html('<div class="note">' + t("Manual program sedang disiapkan.",
+                                             "The user manual is being prepared.") + "</div>")
 
 
 def penyusun() -> None:
