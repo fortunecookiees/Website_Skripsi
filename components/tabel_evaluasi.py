@@ -52,7 +52,6 @@ def strip_metrik_acuan(m: dict) -> str:
 
 def tabel_ringkasan_validasi(r: pd.DataFrame) -> None:
     """MAE & RMSE per horizon atas semua tanggal acuan (hasil core.metrik.ringkasan_horizon)."""
-    # horizon sebagai kolom agar tabel pendek (3 baris) dan bisa dibaca mendatar
     def sel(v, desimal=1):
         return "–" if v is None or pd.isna(v) else angka(v, desimal)
     kepala = "".join(f'<th class="num">t+{int(h)}</th>' for h in r["horizon"])
@@ -158,18 +157,26 @@ def tabel_importance(imp: pd.Series, n: int = 10) -> str:
              "three scenarios.")
 
 
-def tabel_skenario(data: dict, alpha: float = 0.05) -> str:
-    """RMSE uji S1/S2/S3 + uji DM S1 vs S3; RMSE terkecil per horizon ditebalkan. Mengembalikan catatan."""
+SKENARIO = ("S1", "S2", "S3")
+# (kunci di JSON, judul kolom, desimal, True = makin besar makin baik)
+METRIK_SKENARIO = (("MAE", "MAE", 3, False), ("RMSE", "RMSE", 3, False),
+                   ("MAPE", "MAPE (%)", 2, False), ("R2", "R²", 3, True))
+
+
+def skenario_lengkap(data: dict) -> bool:
+    """True jika setiap horizon punya key "lengkap" (MAE, RMSE, MAPE, R2 untuk S1–S3)."""
     sk = data["skenario"]
-    isi, s3_lebih_baik, signifikan = [], [], []
+    return all(isinstance(sk[str(h)].get("lengkap"), dict)
+               and all(s in sk[str(h)]["lengkap"] for s in SKENARIO) for h in HORIZONS)
+
+
+def _tabel_skenario_rmse(sk: dict) -> None:
+    """Tampilan lama: RMSE saja per skenario (dipakai bila key "lengkap" tidak ada)."""
+    isi = []
     for h in map(str, HORIZONS):
         r = sk[h]
-        terbaik = min(("S1", "S2", "S3"), key=r.get)
-        sel = "".join(f'<td class="num{" best" if k == terbaik else ""}">{angka(r[k], 3)}</td>' for k in ("S1", "S2", "S3"))
-        if r["S3"] < r["S1"]:
-            s3_lebih_baik.append(h)
-        if r["p"] < alpha:
-            signifikan.append(h)
+        terbaik = min(SKENARIO, key=r.get)
+        sel = "".join(f'<td class="num{" best" if k == terbaik else ""}">{angka(r[k], 3)}</td>' for k in SKENARIO)
         isi.append(f'<tr><td>t+{h}</td>{sel}<td class="num">{angka(r["DM"], 3)}</td>'
                    f'<td class="num">{angka(r["p"], 4)}</td></tr>')
     st.html(f'<table class="tbl"><tr><th>Horizon</th><th class="num">S1 · {t("tanpa statis", "no static")}</th>'
@@ -177,6 +184,47 @@ def tabel_skenario(data: dict, alpha: float = 0.05) -> str:
             f'<th class="num">S3 · {t("+ kepadatan &amp; RTH", "+ density &amp; GOS")}</th>'
             f'<th class="num">DM (S1 vs S3)</th><th class="num">p</th></tr>{"".join(isi)}</table>')
 
+
+def _tabel_skenario_lengkap(sk: dict) -> None:
+    """MAE, RMSE, MAPE, R² tiap skenario (3 baris per horizon); DM dan p sekali per horizon."""
+    nama = {"S1": "S1 · " + t("tanpa variabel statis", "no static variables"),
+            "S2": "S2 · " + t("+ penanda stasiun", "+ station marker"),
+            "S3": "S3 · " + t("+ kepadatan &amp; RTH", "+ density &amp; GOS")}
+    isi = []
+    for h in map(str, HORIZONS):
+        r, lk = sk[h], sk[h]["lengkap"]
+        terbaik = {kunci: (max if naik else min)(SKENARIO, key=lambda s: lk[s][kunci])
+                   for kunci, _, _, naik in METRIK_SKENARIO}
+        for i, s in enumerate(SKENARIO):
+            sel = "".join(f'<td class="num{" best" if terbaik[kunci] == s else ""}">{angka(lk[s][kunci], d)}</td>'
+                          for kunci, _, d, _ in METRIK_SKENARIO)
+            if i == 0:
+                akhir = " grupAkhir" if h == str(HORIZONS[-1]) else ""
+                isi.append(f'<tr class="dlmGrup{akhir}"><td rowspan="3">t+{h}</td><td>{nama[s]}</td>{sel}'
+                           f'<td class="num" rowspan="3">{angka(r["DM"], 3)}</td>'
+                           f'<td class="num" rowspan="3">{angka(r["p"], 4)}</td></tr>')
+            else:
+                kelas = ' class="dlmGrup"' if i < len(SKENARIO) - 1 else ""
+                isi.append(f'<tr{kelas}><td>{nama[s]}</td>{sel}</tr>')
+    kepala = "".join(f'<th class="num">{judul}</th>' for _, judul, _, _ in METRIK_SKENARIO)
+    st.html(f'<table class="tbl"><tr><th>Horizon</th><th>{t("Skenario", "Scenario")}</th>{kepala}'
+            f'<th class="num">DM (S1 vs S3)</th><th class="num">p</th></tr>{"".join(isi)}</table>')
+
+
+def tabel_skenario(data: dict, alpha: float = 0.05) -> str:
+    """Hasil uji S1/S2/S3 + uji DM S1 vs S3; nilai terbaik per horizon ditebalkan. Mengembalikan catatan.
+
+    Jika setiap horizon punya key "lengkap", tampil MAE/RMSE/MAPE/R²; jika tidak, RMSE saja.
+    """
+    sk = data["skenario"]
+    lengkap = skenario_lengkap(data)
+    if lengkap:
+        _tabel_skenario_lengkap(sk)
+    else:
+        _tabel_skenario_rmse(sk)
+
+    s3_lebih_baik = [h for h in map(str, HORIZONS) if sk[h]["S3"] < sk[h]["S1"]]
+    signifikan = [h for h in map(str, HORIZONS) if sk[h]["p"] < alpha]
     daftar = ", ".join(f"t+{h}" for h in s3_lebih_baik)
     tambahan = f" ({daftar})" if s3_lebih_baik else ""
     n_s3, n_h, a = len(s3_lebih_baik), len(HORIZONS), angka(alpha, 2)

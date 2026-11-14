@@ -42,14 +42,12 @@ def contoh(stasiun="DKI3 Jagakarsa", n=6) -> pd.DataFrame:
     return d
 
 
-# 1. Template -> hasil harus identik dengan Mode Aktual dashboard (DKI1, 8 Nov 2025)
 tpl = buat_template(mentah)
 h = jalankan(baca_file(tpl, "template.xlsx"))
 ref = prediksi_7_hari(models, kondisi_terakhir(dataset, "DKI1 Bundaran HI"))
 cek("template valid & prediksi = dashboard", h.ok and np.allclose(h.prediksi["pm25"], ref["pm25"]),
     f"unggah={h.prediksi['pm25'].round(1).tolist() if h.ok else h.error}  dashboard={ref['pm25'].round(1).tolist()}")
 
-# 2. CSV pemisah ';' + desimal koma, 2 stasiun, kode 'dki3', kolom tambahan
 d = pd.concat([contoh(), contoh("DKI5 Kebon Jeruk")])
 d["stasiun"] = d["stasiun"].replace({"DKI3 Jagakarsa": "dki3"})
 d["catatan"] = "x"
@@ -63,7 +61,6 @@ cek("  prediksi DKI3 dari CSV = dashboard", h.ok and np.allclose(
 cek("  CSV hasil berisi 14 baris + kolom benar", h.ok and hasil_ke_csv(h.prediksi).decode("utf-8-sig").splitlines()[0]
     == "stasiun,tanggal_dasar,tanggal,horizon,pm25,kategori" and len(hasil_ke_csv(h.prediksi).splitlines()) == 15)
 
-# 3–10. Error
 kasus = {
     "kolom salah nama (pm2.5)": (lambda d: d.rename(columns={"pm25": "pm2.5"}), "pm2.5"),
     "format tanggal salah": (lambda d: d.assign(tanggal=d["tanggal"].where(d.index != 2, "08/11/2025")), "YYYY-MM-DD"),
@@ -80,18 +77,15 @@ for nama, (ubah, kata) in kasus.items():
     h = jalankan(ubah(contoh()))
     cek(f"error: {nama}", not h.ok and kata.lower() in teks(h.error).lower(), teks(h.error))
 
-# 11–12. Peringatan (prediksi tetap jalan)
 h = jalankan(contoh().assign(pm10=np.nan))
 cek("peringatan: PM10 kosong -> data tidak tersedia", h.ok and "PM10" in teks(h.peringatan)
     and np.isnan(h.kondisi["DKI3 Jagakarsa"]["pm10"]), teks(h.peringatan))
 h = jalankan(contoh().assign(suhu_c=45.0))
 cek("peringatan: suhu di luar rentang", h.ok and "di luar rentang" in teks(h.peringatan), teks(h.peringatan))
 
-# 13. pm25 kosong di luar 4 hari terakhir -> diisi ffill, tetap valid
 h = jalankan(contoh().assign(pm25=lambda d: d["pm25"].where(d.index != 0, np.nan)))
 cek("pm25 kosong di hari awal (di luar 4 hari terakhir) tetap valid", h.ok, teks(h.error))
 
-# 14–20. Tab Validasi
 KOLOM_FILE = contoh().columns.tolist()
 
 
@@ -108,7 +102,6 @@ h = jalankan(contoh(n=11))
 cek("validasi: 11 hari -> tepat 1 tanggal acuan", h.ok and len(h.validasi) == 1,
     f"{len(h.validasi)} tanggal" if h.ok else teks(h.error))
 
-# prediksi & aktual dari file = halaman Evaluation pada tanggal yang sama (data uji 2025)
 uji, batas = data_evaluasi(dataset)
 uji = pd.concat([uji, prediksi_batch(models, uji)], axis=1)
 kol = [f"pred_h{k}" for k in HORIZONS] + [f"target_h{k}" for k in HORIZONS] + [f"target_h{k}_asli" for k in HORIZONS]
@@ -121,7 +114,6 @@ for st_nama in ["DKI1 Bundaran HI", "DKI4 Lubang Buaya"]:
     cek(f"validasi {st_nama.split()[0]}: prediksi & aktual = Evaluation", h.ok and cocok,
         f"{len(a)} tanggal acuan, {len(sama)} beririsan dengan data uji")
 
-# meteorologi kosong di tengah file -> tanggal acuan itu dilewati & dihitung
 d = potong("DKI1 Bundaran HI", batas, 15)
 h_utuh = jalankan(d)
 d.loc[5, "kelembapan_pct"] = np.nan
@@ -131,9 +123,8 @@ cek("validasi: meteorologi kosong -> tanggal acuan dilewati",
     h.ok and len(h.validasi) == len(h_utuh.validasi) - 1 and tgl_kosong not in set(h.validasi["tanggal"])
     and h.dilewati_meteo == {"DKI1 Bundaran HI": 1}, f"dilewati={h.dilewati_meteo}")
 
-# PM2.5 aktual kosong -> ditandai data diisi, tidak masuk metrik
 d = potong("DKI1 Bundaran HI", batas, 11)
-d.loc[6, "pm25"] = np.nan  # = target t+3 dari satu-satunya tanggal acuan (indeks 3); 4 hari terakhir wajib terisi
+d.loc[6, "pm25"] = np.nan
 h = jalankan(d)
 b = h.validasi.iloc[0]
 m = metrik_acuan(b)

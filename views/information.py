@@ -10,7 +10,7 @@ from core.config import (EARLY_STOPPING, FITUR, FITUR_METEOROLOGI, FITUR_POLUTAN
                          HORIZONS, KATEGORI_ISPU, N_ESTIMATORS_MAKS, N_EVALUASI_OPTIMASI, N_ITERASI,
                          N_PARTIKEL, RENTANG_PSO, ROOT, STASIUN)
 
-MANUAL_PATH = ROOT / "assets" / "manual_program.pdf"  # ditaruh manual oleh penyusun
+MANUAL_PATH = ROOT / "assets" / "manual_program.pdf"
 
 TAG_SPASIAL = "background:#ddeaf2;color:#22352c"
 TAG_NETRAL = "background:#ecf3f8;color:var(--sub)"
@@ -33,7 +33,6 @@ BILANGAN_BULAT = {"max_depth", "min_child_weight"}
 PENYUSUN = ("Fortuna Arleo Sahara", "535230144")
 PEMBIMBING = [(("Pembimbing 1", "Supervisor 1"), "Tony, S.Kom., M.Kom., Ph.D."),
               (("Pembimbing 2", "Supervisor 2"), "Manatap Dolok Lauro, S.Kom., M.M.S.I.")]
-# (judul ID/EN, ikon material, isi ID/EN) untuk kartu panduan bernomor
 LANGKAH = [
     (("Dashboard", "Dashboard"), "space_dashboard",
      ("Pilih stasiun. <b>Mode Aktual</b> menampilkan prediksi 7 hari dari kondisi terakhir dataset, ringkasan "

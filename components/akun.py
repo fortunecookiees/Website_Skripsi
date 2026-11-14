@@ -12,9 +12,9 @@ from core.teks import terjemah
 from .bahasa import t
 
 KUNCI_SESI = "sesi_akun"
-KUNCI_TUJUAN = "akun_setelah_masuk"   # halaman tujuan setelah berhasil masuk
-KUNCI_MODE = "akun_mode"              # "Masuk" / "Daftar"
-KUNCI_PESAN = "akun_pesan"            # pesan sekali tampil (mis. setelah keluar)
+KUNCI_TUJUAN = "akun_setelah_masuk"
+KUNCI_MODE = "akun_mode"
+KUNCI_PESAN = "akun_pesan"
 HALAMAN_AKUN = "views/akun.py"
 
 
@@ -26,7 +26,7 @@ def _klien() -> tuple[KlienAuth | None, str | None]:
     try:
         cfg = st.secrets["supabase"]
         url, key = str(cfg["url"]).strip(), str(cfg["key"]).strip()
-    except Exception:  # noqa: BLE001 — file/bagian/kunci tidak ada
+    except Exception:  # noqa: BLE001
         return None, t("Fitur akun belum dikonfigurasi (secrets Supabase belum diisi).",
                        "Accounts are not configured yet (Supabase secrets are empty).")
     if not url.startswith("https://"):
@@ -72,7 +72,7 @@ def keluar() -> None:
     sesi: Sesi | None = st.session_state.pop(KUNCI_SESI, None)
     if sesi is not None and (k := klien()) is not None:
         k.keluar(sesi.access_token)
-    st.session_state.pop("riwayat_unggah", None)  # riwayat milik sesi akun ini
+    st.session_state.pop("riwayat_unggah", None)
     st.session_state.pop("akun_menu_admin", None)
     st.session_state[KUNCI_PESAN] = t("Anda telah keluar.", "You have signed out.")
 
@@ -89,7 +89,7 @@ def wajib_masuk(tujuan: str, nama_fitur: str, manfaat: list[str] | None = None) 
         return sesi
     masalah = masalah_konfigurasi()
     daftar = "".join(f"<li>{m}</li>" for m in manfaat or [])
-    _, tengah, _ = st.columns([1, 1.6, 1])  # kartu di tengah, seperti halaman Masuk / Daftar
+    _, tengah, _ = st.columns([1, 1.6, 1])
     with tengah, st.container(key="card_ajakan_masuk"):
         sub = t("Setelah masuk, Anda dapat:", "After signing in, you can:")
         st.html('<div class="ajakan"><div class="ajIkon"><span class="material-symbols-rounded">lock</span></div>'
@@ -128,8 +128,8 @@ def blok_sidebar() -> None:
     st.button(t("Keluar", "Sign out"), key="tombol_keluar", on_click=keluar, icon=":material/logout:", width="stretch")
 
 
-KUNCI_MENU_ADMIN = "akun_menu_admin"   # (waktu cek, token, admin?) — HANYA untuk tampilan menu
-JEDA_MENU_ADMIN = 120                   # detik
+KUNCI_MENU_ADMIN = "akun_menu_admin"
+JEDA_MENU_ADMIN = 120
 
 
 def klien_admin():

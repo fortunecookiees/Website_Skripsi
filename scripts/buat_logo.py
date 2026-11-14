@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT))
 from components.logo import _PARTIKEL, svg_mentah  # noqa: E402
 
 INK, PUTIH = (28, 28, 28, 255), (255, 255, 255, 255)
-SKALA = 8                      # 64 -> 512 px
+SKALA = 8
 LEBAR = 5 * SKALA
 
 
@@ -22,7 +22,7 @@ def s(v: float) -> float:
 
 def garis(d: ImageDraw.ImageDraw, x1, y1, x2, y2):
     d.line([(s(x1), s(y1)), (s(x2), s(y2))], fill=PUTIH, width=LEBAR)
-    for x, y in ((x1, y1), (x2, y2)):  # ujung membulat
+    for x, y in ((x1, y1), (x2, y2)):
         d.ellipse([s(x) - LEBAR / 2, s(y) - LEBAR / 2, s(x) + LEBAR / 2, s(y) + LEBAR / 2], fill=PUTIH)
 
 
@@ -36,8 +36,8 @@ def busur(d: ImageDraw.ImageDraw, cx, cy, r, mulai, akhir, ujung):
 img = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
 d = ImageDraw.Draw(img)
 d.rounded_rectangle([0, 0, 511, 511], radius=s(15), fill=INK)
-garis(d, 12, 24, 34, 24); busur(d, 34, 17, 7, 180, 90, (27, 17))   # garis atas, melingkar ke atas
-garis(d, 12, 34, 44, 34); busur(d, 44, 41, 7, 270, 180, (37, 41))  # garis tengah, melingkar ke bawah
+garis(d, 12, 24, 34, 24); busur(d, 34, 17, 7, 180, 90, (27, 17))
+garis(d, 12, 34, 44, 34); busur(d, 44, 41, 7, 270, 180, (37, 41))
 garis(d, 12, 44, 26, 44)
 for x, y, r in _PARTIKEL:
     d.ellipse([s(x - r), s(y - r), s(x + r), s(y + r)], fill=PUTIH)

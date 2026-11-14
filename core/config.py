@@ -8,23 +8,19 @@ DATA_PATH = ROOT / "data" / "datasetskripsi.xlsx"
 MODEL_DIR = ROOT / "models"
 EVAL_PATH = MODEL_DIR / "hasil_evaluasi.json"
 SKENARIO_PATH = MODEL_DIR / "hasil_skenario.json"
-RTH_KOORDINAT_PATH = ROOT / "data" / "rth_koordinat.csv"  # hasil scripts/geocode_rth.py
+RTH_KOORDINAT_PATH = ROOT / "data" / "rth_koordinat.csv"
 
 HORIZONS = [1, 2, 3, 4, 5, 6, 7]
 
-# Konfigurasi optimasi di train/training.py (bagian 7 & 14) — hanya untuk ditampilkan
 N_PARTIKEL, N_ITERASI = 20, 40
-N_EVALUASI_OPTIMASI = N_PARTIKEL * (N_ITERASI + 1)  # anggaran evaluasi PSO = Random Search
+N_EVALUASI_OPTIMASI = N_PARTIKEL * (N_ITERASI + 1)
 N_ESTIMATORS_MAKS, EARLY_STOPPING = 600, 50
-RENTANG_PSO = {  # batas bawah & atas ruang pencarian (BB, BA)
+RENTANG_PSO = {
     "max_depth": (3, 10), "learning_rate": (0.01, 0.30), "subsample": (0.50, 1.00),
     "colsample_bytree": (0.50, 1.00), "min_child_weight": (1, 10), "reg_alpha": (0.00, 2.00),
     "reg_lambda": (0.50, 5.00),
 }
 
-# ---------------------------------------------------------------------
-# Stasiun SPKU (nama sama persis dengan kolom `stasiun` di dataset)
-# ---------------------------------------------------------------------
 STASIUN = {
     "DKI1 Bundaran HI":   {"kecamatan": "Menteng",       "lat": -6.1946, "lon": 106.8229},
     "DKI2 Kelapa Gading": {"kecamatan": "Kelapa Gading", "lat": -6.1553, "lon": 106.9070},
@@ -33,9 +29,6 @@ STASIUN = {
     "DKI5 Kebon Jeruk":   {"kecamatan": "Kebon Jeruk",   "lat": -6.1919, "lon": 106.7683},
 }
 
-# ---------------------------------------------------------------------
-# Fitur (urutan FITUR harus sama dengan `fitur` di .pkl)
-# ---------------------------------------------------------------------
 FITUR_SPASIAL = ["kepadatan_penduduk_jiwa_km2", "luas_rth_km2"]
 FITUR_METEOROLOGI = ["suhu_c", "kelembapan_pct", "curah_hujan_mm", "tutupan_awan_pct",
                      "kecepatan_angin_kmh", "tekanan_hpa", "arah_angin_deg"]
@@ -66,7 +59,6 @@ LABEL_FITUR = {
     "bulan": ("Bulan", "1–12"),
     "hari": ("Hari dalam minggu", "0=Senin … 6=Minggu"),
 }
-# versi bahasa Inggris (yang tidak tercantum sama dengan LABEL_FITUR, mis. PM10, SO₂)
 LABEL_FITUR_EN = {
     "kepadatan_penduduk_jiwa_km2": ("Population density", "people/km²"),
     "luas_rth_km2": ("Green open space area", "km²"),
@@ -85,11 +77,7 @@ LABEL_FITUR_EN = {
     "hari": ("Day of week", "0=Monday … 6=Sunday"),
 }
 
-# ---------------------------------------------------------------------
-# Kategori ISPU (PermenLHK No. 14/2020)
-# ---------------------------------------------------------------------
 KATEGORI_ISPU = [
-    # (batas atas, nama, rentang, warna utama, warna latar lembut, warna teks di atas latar lembut)
     (50,  "Baik",               "1–50",    "#2E7D4F", "#E7F0EA", "#2E7D4F"),
     (100, "Sedang",             "51–100",  "#2A5F9E", "#E6ECF3", "#2A5F9E"),
     (200, "Tidak Sehat",        "101–200", "#B08300", "#F6EFDC", "#8A6A00"),
@@ -98,8 +86,6 @@ KATEGORI_ISPU = [
 ]
 
 
-# Rekomendasi tindakan untuk PM2.5 per kategori — Lampiran II PermenLHK No. P.14/2020
-# (kelompok sensitif, setiap orang); kategori Baik hanya satu rekomendasi umum.
 SARAN_ISPU_PM25 = {
     "Baik": (None, "Sangat baik melakukan kegiatan di luar"),
     "Sedang": ("Kurangi aktivitas fisik yang terlalu lama atau berat",

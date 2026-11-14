@@ -19,7 +19,6 @@ def judul_skripsi() -> str:
     from .bahasa import t
     return t(JUDUL_SKRIPSI, JUDUL_SKRIPSI_EN)
 
-# viewBox 64x64: dua garis hembusan dengan ujung melingkar, satu garis pendek, dan tiga partikel
 _ISI = (
     '<path d="M12 24 H34 a7 7 0 1 0 -7 -7" />'
     '<path d="M12 34 H44 a7 7 0 1 1 -7 7" />'

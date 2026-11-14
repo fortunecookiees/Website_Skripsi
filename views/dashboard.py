@@ -21,7 +21,7 @@ from core.config import STASIUN
 from core.inference import prediksi_7_hari
 from core.simulasi import samakan_riwayat_pm25
 
-MODE_AKTUAL, MODE_SIMULASI = "aktual", "simulasi"  # nilai tetap; label mengikuti bahasa
+MODE_AKTUAL, MODE_SIMULASI = "aktual", "simulasi"
 NAMA_MODE = {MODE_AKTUAL: ("Mode Aktual", "Actual Mode"), MODE_SIMULASI: ("Mode Simulasi", "Simulation Mode")}
 SUBJUDUL = {
     MODE_AKTUAL: ("Prediksi indeks ISPU PM2.5 satu sampai tujuh hari ke depan per stasiun",
@@ -84,7 +84,7 @@ def mode_simulasi(stasiun: str) -> None:
     rentang = sd.rentang_fitur()
     aktual = sd.prediksi_aktual(stasiun)
     prefix = f"sim_{stasiun}"
-    kunci_hasil = f"sim_hasil_{stasiun}_{sd.kunci_dashboard()}"  # (nilai slider, hasil 7 hari, waktu klik)
+    kunci_hasil = f"sim_hasil_{stasiun}_{sd.kunci_dashboard()}"
 
     banner_simulasi()
     kiri, kanan = st.columns([1.15, 1], gap="medium")
@@ -97,10 +97,8 @@ def mode_simulasi(stasiun: str) -> None:
             c_reset.button(t("Kembalikan ke nilai aktual", "Reset to actual values"), on_click=_kembalikan,
                            args=(baris, rentang, prefix, kunci_hasil), key="reset_simulasi")
 
-    # model hanya dijalankan saat tombol Prediksi diklik; menggeser slider tidak memicu prediksi
     samakan = samakan_aktif(prefix, nilai["pm25"])
     if klik:
-        # bulan & hari tetap dari kondisi aktual; lag/rolling PM2.5 ikut data historis kecuali toggle riwayat menyala
         fitur_sim = baris.copy()
         for f, v in nilai.items():
             fitur_sim[f] = v
@@ -152,8 +150,7 @@ def mode_simulasi(stasiun: str) -> None:
     st.html(panel_simulasi(stasiun, nilai_dipakai["pm25"], simulasi, dijalankan))
 
 
-# --- halaman ------------------------------------------------------------
-if st.session_state.get("pil_mode") not in NAMA_MODE:  # nilai lama dari sesi sebelum pilihan bahasa
+if st.session_state.get("pil_mode") not in NAMA_MODE:
     st.session_state.pop("pil_mode", None)
 judul(t("Prediksi PM2.5", "PM2.5 Forecast"), t(*SUBJUDUL[st.session_state.get("pil_mode") or MODE_AKTUAL]))
 sumber = sd.sumber_dashboard()
@@ -174,7 +171,7 @@ with st.container(key="pemilih"):
         mode = st.segmented_control("Mode", [MODE_AKTUAL, MODE_SIMULASI], default=MODE_AKTUAL,
                                     format_func=lambda m: t(*NAMA_MODE[m]),
                                     key="pil_mode", label_visibility="collapsed") or MODE_AKTUAL
-stasiun = pilihan or st.session_state.get("stasiun_terakhir", daftar_stasiun[0])  # pills tidak boleh kosong
+stasiun = pilihan or st.session_state.get("stasiun_terakhir", daftar_stasiun[0])
 st.session_state["stasiun_terakhir"] = stasiun
 
 if mode == MODE_SIMULASI:

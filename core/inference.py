@@ -8,13 +8,6 @@ import xgboost as xgb
 from .config import FITUR, HORIZONS, MODEL_DIR
 from .preprocessing import matriks_fitur
 
-# ---------------------------------------------------------------------
-# Fallback pemuatan .pkl lintas OS
-# Model dilatih di Colab (Linux). Field `rng_state` di config booster
-# disimpan dalam format libstdc++ yang tidak terbaca xgboost Windows (MSVC)
-# -> "input stream corrupted". rng_state hanya dipakai saat training,
-# jadi aman diganti dengan state valid lokal; prediksi tidak berubah.
-# ---------------------------------------------------------------------
 _RNG_KEY = b"L" + (9).to_bytes(8, "big") + b"rng_state"
 
 
@@ -69,9 +62,6 @@ def muat_model(model_dir=MODEL_DIR) -> dict[int, dict]:
     return models
 
 
-# ---------------------------------------------------------------------
-# Prediksi
-# ---------------------------------------------------------------------
 def prediksi_batch(models: dict, data: pd.DataFrame) -> pd.DataFrame:
     """Prediksi semua horizon untuk banyak baris. Kolom hasil: pred_h1..pred_h7."""
     X = matriks_fitur(data)

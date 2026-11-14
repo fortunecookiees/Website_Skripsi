@@ -18,7 +18,7 @@ KUNCI_ARAHKAN = "akun_arahkan"
 
 def _gagal(pesan: list[str], *kunci_password: str) -> None:
     st.session_state[KUNCI_ERROR] = pesan
-    for k in kunci_password:  # jangan biarkan password tertinggal di form
+    for k in kunci_password:
         st.session_state[k] = ""
 
 
@@ -53,7 +53,7 @@ def proses_daftar() -> None:
     except AuthError as e:
         return _gagal([e.pesan], "daftar_password", "daftar_konfirmasi")
     ss["daftar_password"] = ss["daftar_konfirmasi"] = ""
-    if sesi is None:  # konfirmasi email masih aktif di Supabase
+    if sesi is None:
         ss[KUNCI_INFO] = t("Akun dibuat. Periksa email Anda untuk konfirmasi, lalu masuk.",
                            "Account created. Check your email to confirm it, then sign in.")
         ss[akun.KUNCI_MODE] = MASUK
@@ -75,7 +75,6 @@ def ganti_mode(mode: str) -> None:
     st.session_state.pop(KUNCI_ERROR, None)
 
 
-# teks panel samping: ((judul), (isi), (label tombol), mode tujuan) — tiap teks (Indonesia, English)
 PANEL = {
     MASUK: (("Belum punya akun?", "No account yet?"),
             ("Daftar untuk mengunggah data harian Anda sendiri dan melihat prediksi PM2.5 tujuh hari ke depan.",
@@ -123,13 +122,12 @@ def form_daftar() -> None:
         st.form_submit_button(t("Daftar", "Register"), type="primary", on_click=proses_daftar, width="stretch")
 
 
-# --- halaman ------------------------------------------------------------
 if tujuan := st.session_state.pop(KUNCI_ARAHKAN, None):
     st.switch_page(tujuan)
 
 judul(t("Akun", "Account"), t("Masuk atau daftar untuk memakai fitur Unggah Data",
                               "Sign in or register to use Upload Data"))
-_, tengah, _ = st.columns([1, 1.6, 1])  # form di tengah halaman
+_, tengah, _ = st.columns([1, 1.6, 1])
 with tengah:
     if (masalah := akun.masalah_konfigurasi()) is not None:
         st.html(f'<div class="errBox"><b class="h">{t("Fitur akun belum tersedia", "Accounts are not available")}</b>{escape(masalah)}</div>')
@@ -156,7 +154,6 @@ with tengah:
     if mode not in PANEL:
         mode = st.session_state[akun.KUNCI_MODE] = MASUK
 
-# kartu dua sisi: panel gradasi + form; saat Daftar posisinya bertukar (kunci berbeda -> animasi diputar ulang)
 _, tengah, _ = st.columns([0.25, 3, 0.25])
 with tengah:
     with st.container(key=f"auth_{mode.lower()}"):

@@ -8,14 +8,14 @@ from components.format import angka, tanggal_pendek
 from components.grafik import grafik_optimasi, grafik_sekitar_acuan
 from components.kartu import judul_kartu, kosong, kpi
 from components.pilih_tanggal import pilih_tanggal
-from components.tabel_evaluasi import (catatan_diisi, legend_sekitar_acuan, tabel_importance, tabel_metrik,
-                                       tabel_optimasi, tabel_prediksi_vs_aktual, tabel_skenario)
+from components.tabel_evaluasi import (catatan_diisi, legend_sekitar_acuan, skenario_lengkap, tabel_importance,
+                                       tabel_metrik, tabel_optimasi, tabel_prediksi_vs_aktual, tabel_skenario)
 from components.tema import judul, label
-from core.config import HORIZONS, KATEGORI_ISPU, N_EVALUASI_OPTIMASI, STASIUN, kategori_ispu
+from core.config import HORIZONS, KATEGORI_ISPU, STASIUN, kategori_ispu
 from core.metrik import metrik_panjang
 
-JENDELA_HARI = 7  # rentang grafik: acuan - 7 hari s.d. acuan + 7 hari
-KUNCI_HASIL = "eval_hasil"  # ((stasiun, tanggal acuan), baris data uji + pred_h1..h7)
+JENDELA_HARI = 7
+KUNCI_HASIL = "eval_hasil"
 daftar_stasiun = list(STASIUN)
 
 
@@ -37,7 +37,6 @@ def bagian_prediksi() -> None:
     kolom_hint.html(f'<div class="stepHint">{t("PM2.5 aktual hari acuan", "Actual PM2.5 on the reference date")}: '
                     f'<b>{k["nilai"]} ISPU</b>{diisi} · {kategori(k["kategori"])}</div>')
 
-    # model hanya dijalankan saat tombol Prediksi diklik; hasil berlaku untuk pasangan stasiun + tanggal itu
     pilihan_ini = (stasiun, acuan)
     if st.button(t("Prediksi", "Predict"), type="primary", key="eval_prediksi"):
         with st.spinner(t("Menghitung prediksi…", "Computing forecast…")):
@@ -62,7 +61,6 @@ def bagian_prediksi() -> None:
     prediksi = pd.DataFrame({"tanggal": [acuan + pd.Timedelta(days=h) for h in HORIZONS],
                              "pm25": [baris[f"pred_h{h}"] for h in HORIZONS]})
 
-    # tabel & grafik berdampingan, sama tinggi (CSS st-key-baris_*)
     with st.container(key="baris_eval_acuan"):
         kiri, kanan = st.columns([1.1, 1], gap="medium")
         with kiri, st.container(key="card_eval_tabel"):
@@ -150,18 +148,7 @@ def bagian_jelajah() -> None:
         ("MAPE", f'{angka(m["MAPE"], 1)}%' if m["MAPE"] is not None else "–",
          t("rata-rata galat relatif", "mean relative error")),
     ]))
-    per_h = []
-    for h in sorted(d["horizon"].unique()):
-        mh = metrik_panjang(d[d["horizon"] == h])
-        per_h.append(f'<tr><td>t+{h}</td><td class="num">{angka(mh["n"])}</td>'
-                     f'<td class="num">{angka(mh["MAE"], 2) if mh["n"] else "–"}</td>'
-                     f'<td class="num">{angka(mh["RMSE"], 2) if mh["n"] else "–"}</td></tr>')
-    kiri, kanan = st.columns([1, 2.2], gap="medium")
-    with kiri, st.container(key="card_eval_perh"):
-        st.html(judul_kartu(t("Per Horizon", "By Horizon"), t("hasil filter", "filtered")) + '<table class="tbl"><tr><th>Horizon</th>'
-                '<th class="num">n</th><th class="num">MAE</th><th class="num">RMSE</th></tr>'
-                f'{"".join(per_h)}</table>')
-    with kanan, st.container(key="card_eval_baris"):
+    with st.container(key="card_eval_baris"):
         st.html(judul_kartu(t("Daftar Prediksi", "Prediction List"), t(f"{angka(len(d))} baris", f"{angka(len(d))} rows")))
         tampil = pd.DataFrame({
             "stasiun": d["stasiun"].str.split().str[0], "acuan": d["tanggal_acuan"].dt.date,
@@ -202,21 +189,18 @@ def bagian_metrik() -> None:
                                      "Model performance on the full test set and input variable contributions")
             + '</div></div>')
 
-    # 2 baris x 2 kolom; pasangan dipilih yang tingginya mirip, lalu kartu disamakan tingginya lewat CSS
-    with st.container(key="baris_kinerja_1"):
-        kiri, kanan = st.columns(2, gap="medium")
-        with kiri:
-            label(t("Metrik Evaluasi Seluruh Data Uji", "Evaluation Metrics on All Test Data"))
-            with st.container(key="card_eval_metrik"):
-                catatan = tabel_metrik(ev)
-                st.html(f'<div class="note">{catatan}</div>')
-        with kanan:
-            label(t("Pengaruh Variabel Spasial (RMSE Data Uji)", "Effect of Spatial Variables (Test RMSE)"))
-            with st.container(key="card_eval_skenario"):
-                catatan = tabel_skenario(sd.hasil_skenario())
-                st.html(f'<div class="note">{catatan} ' + t("Sumber: keluaran Google Colab",
-                                                            "Source: Google Colab output of")
-                        + ' <code>train/training.py</code> ' + t("(bagian 10).", "(section 10).") + '</div>')
+    # Metrik dan skenario masing-masing selebar halaman agar tidak saling menarik tinggi kartu
+    label(t("Metrik Evaluasi Seluruh Data Uji", "Evaluation Metrics on All Test Data"))
+    with st.container(key="card_eval_metrik"):
+        tabel_metrik(ev)
+
+    skenario = sd.hasil_skenario()
+    if skenario_lengkap(skenario):
+        label(t("Pengaruh Variabel Spasial (Data Uji)", "Effect of Spatial Variables (Test Data)"))
+    else:
+        label(t("Pengaruh Variabel Spasial (RMSE Data Uji)", "Effect of Spatial Variables (Test RMSE)"))
+    with st.container(key="card_eval_skenario"):
+        tabel_skenario(skenario)
 
     with st.container(key="baris_kinerja_2"):
         kiri, kanan = st.columns(2, gap="medium")
@@ -225,20 +209,10 @@ def bagian_metrik() -> None:
             with st.container(key="card_eval_optimasi"):
                 grafik_optimasi(ev, key="grafik_optimasi")
                 tabel_optimasi(ev)
-                n_ev = angka(N_EVALUASI_OPTIMASI)
-                st.html('<div class="note">' + t(
-                    f"Random Search dan PSO menggunakan ruang pencarian dan jumlah evaluasi yang sama, yaitu {n_ev} "
-                    "evaluasi. Makin rendah garis, makin kecil error-nya; nilai tebal menunjukkan RMSE terkecil pada "
-                    "setiap horizon.",
-                    f"Random Search and PSO use the same search space and the same number of evaluations ({n_ev}). "
-                    "Lower lines mean smaller errors; bold values mark the lowest RMSE at each horizon.") + '</div>')
         with kanan:
             label(t("Kontribusi Variabel (10 Teratas, Horizon t+1)", "Variable Contribution (Top 10, Horizon t+1)"))
             with st.container(key="card_eval_importance"):
-                catatan = tabel_importance(sd.feature_importance(1))
-                st.html(f'<div class="note">{catatan} ' + t(
-                    "Nilai kontribusi adalah <i>feature importance</i> tipe <i>gain</i> dari model t+1.",
-                    "Contribution is the <i>gain</i>-type <i>feature importance</i> of the t+1 model.") + '</div>')
+                tabel_importance(sd.feature_importance(1))
 
 
 judul(t("Evaluasi Model", "Model Evaluation"),

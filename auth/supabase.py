@@ -46,7 +46,7 @@ class AuthError(Exception):
     """Kesalahan autentikasi dengan pesan bahasa Indonesia yang siap ditampilkan."""
 
     def __init__(self, pesan: str, kode: str | None = None):
-        pesan = terjemah(pesan)  # teks Indonesia tetap jadi acuan; ditampilkan sesuai bahasa aktif
+        pesan = terjemah(pesan)
         super().__init__(pesan)
         self.pesan, self.kode = pesan, kode
 
@@ -55,7 +55,7 @@ class AuthError(Exception):
 class Sesi:
     access_token: str
     refresh_token: str
-    expires_at: float          # epoch detik
+    expires_at: float
     id: str
     email: str
     nama: str
@@ -64,9 +64,6 @@ class Sesi:
         return time.time() >= self.expires_at - jeda
 
 
-# ---------------------------------------------------------------------
-# Validasi form (sebelum menghubungi server)
-# ---------------------------------------------------------------------
 def validasi_daftar(nama: str, email: str, password: str, konfirmasi: str) -> list[str]:
     error = []
     if not nama.strip():
@@ -120,12 +117,8 @@ def cek_key(key: str) -> str | None:
     return None
 
 
-# ---------------------------------------------------------------------
-# Klien REST
-# ---------------------------------------------------------------------
 class KlienAuth:
     def __init__(self, url: str, key: str, timeout: float = 10, http=requests):
-        # cukup https://<ref>.supabase.co; path yang ikut tersalin (mis. /rest/v1/) dibuang
         u = urlparse(url.strip())
         self.url = f"{u.scheme}://{u.netloc}/auth/v1"
         self.key = key
@@ -191,9 +184,9 @@ class Profil:
     id: str
     email: str
     nama: str
-    dibuat: str | None          # ISO 8601 dari server
+    dibuat: str | None
     masuk_terakhir: str | None
-    peran: str | None = None    # app_metadata.role — hanya bisa diatur dari dashboard Supabase
+    peran: str | None = None
 
     @property
     def admin(self) -> bool:
@@ -233,7 +226,7 @@ def _error_dari(r) -> AuthError:
     teks = str(isi.get("msg") or isi.get("error_description") or isi.get("message") or "").lower()
     if "already registered" in teks or "already exists" in teks:
         return AuthError(PESAN_ERROR["user_already_exists"], "user_already_exists")
-    if "banned" in teks:  # GoTrue versi lama: tanpa error_code, pesan "User is banned"
+    if "banned" in teks:
         return AuthError(PESAN_ERROR["user_banned"], "user_banned")
     if "invalid login credentials" in teks:
         return AuthError(PESAN_ERROR["invalid_credentials"], "invalid_credentials")

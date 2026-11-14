@@ -18,7 +18,7 @@ from core.teks import terjemah
 
 from .supabase import PERAN_ADMIN, peran_dari
 
-BAN_PERMANEN = "876000h"   # ±100 tahun
+BAN_PERMANEN = "876000h"
 PER_HALAMAN = 100
 MAKS_HALAMAN = 50
 
@@ -106,16 +106,16 @@ class KlienAdmin:
     def __init__(self, url: str, service_key: str, timeout: float = 15, http=requests):
         u = urlparse(url.strip())
         self._dasar = f"{u.scheme}://{u.netloc}"
-        self.__key = service_key.strip()   # atribut privat; tidak pernah dikembalikan ke pemanggil
+        self.__key = service_key.strip()
         self.timeout = timeout
         self.http = http
 
-    def __repr__(self) -> str:  # cegah key ikut tercetak jika objek di-print/log
+    def __repr__(self) -> str:
         return f"KlienAdmin({self._dasar!r})"
 
     def _header(self, tambahan: dict | None = None) -> dict:
         h = {"apikey": self.__key}
-        if not self.__key.startswith("sb_"):  # JWT service_role lama juga dikirim sebagai Bearer
+        if not self.__key.startswith("sb_"):
             h["Authorization"] = f"Bearer {self.__key}"
         return {**h, **(tambahan or {})}
 
@@ -129,7 +129,7 @@ class KlienAdmin:
         try:
             r = getattr(self.http, metode)(f"{self._dasar}{jalur}", **opsi)
         except requests.RequestException:
-            raise AdminError(PESAN_JARINGAN) from None   # tanpa rantai: pesan asli bisa memuat detail permintaan
+            raise AdminError(PESAN_JARINGAN) from None
         if boleh_404 and r.status_code in (400, 404):
             teks = (r.text or "").lower() if hasattr(r, "text") else ""
             if "bucket" in teks and "not found" in teks:
@@ -143,7 +143,6 @@ class KlienAdmin:
             raise AdminError(PESAN_UMUM, r.status_code)
         return r
 
-    # ---------------- Pengguna (Auth Admin API) ----------------
     def daftar_pengguna(self) -> list[Pengguna]:
         semua = []
         for halaman in range(1, MAKS_HALAMAN + 1):
@@ -167,7 +166,6 @@ class KlienAdmin:
     def hapus(self, id_pengguna: str) -> None:
         self._minta("delete", f"/auth/v1/admin/users/{quote(id_pengguna)}")
 
-    # ---------------- Storage (bucket privat) ----------------
     def unduh(self, bucket: str, path: str) -> bytes | None:
         """Isi objek, atau None jika belum ada."""
         r = self._minta("get", f"/storage/v1/object/{quote(bucket)}/{quote(path)}", boleh_404=True)

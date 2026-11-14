@@ -69,7 +69,6 @@ def pesan_error(k: KlienAuth, aksi) -> str:
     return "(tidak ada error)"
 
 
-# --- validasi form -------------------------------------------------------
 cek("daftar valid", validasi_daftar("Budi", "budi@contoh.com", "rahasia", "rahasia") == [])
 e = validasi_daftar("", "budi@", "12345", "123456")
 cek("daftar: nama kosong, email salah, password < 6, konfirmasi beda", len(e) == 4, " | ".join(e))
@@ -80,7 +79,6 @@ cek("key publishable diterima", cek_key(KEY) is None)
 cek("secret key ditolak", "secret key" in (cek_key("sb_secret_xyz") or ""))
 cek("anon key lama ditolak", cek_key("eyJhbGciOi...") is not None)
 
-# --- permintaan & header -------------------------------------------------
 k, http = klien(Respons(200, TOKEN))
 sesi = k.daftar(" Budi ", "budi@contoh.com", "rahasia")
 h = http.permintaan["headers"]
@@ -120,7 +118,6 @@ nama_kosong = dict(TOKEN, user={"id": "u2", "email": "sari@contoh.com", "user_me
 k, _ = klien(Respons(200, nama_kosong))
 cek("nama kosong -> bagian depan email", k.masuk("sari@contoh.com", "x").nama == "sari")
 
-# --- pemetaan error ke bahasa Indonesia ---------------------------------
 kasus = [
     ("email sudah terdaftar (error_code)", Respons(422, {"code": 422, "error_code": "user_already_exists",
                                                           "msg": "User already registered"}),
@@ -154,7 +151,6 @@ for nama, respons, aksi, kata in kasus:
 k, _ = klien(galat=requests.ConnectionError("tidak ada jaringan"))
 cek("error: jaringan putus", pesan_error(k, lambda k: k.masuk("b@c.id", "x")) == PESAN_JARINGAN)
 
-# Profil, ubah nama, ganti password
 USER = {"id": "u1", "email": "budi@contoh.com", "user_metadata": {"nama": "Budi"},
         "created_at": "2026-10-01T03:00:00Z", "last_sign_in_at": "2026-10-13T07:30:00Z"}
 k, http = klien(Respons(200, USER))

@@ -25,7 +25,6 @@ def preprocess(df_mentah: pd.DataFrame) -> pd.DataFrame:
     df = df_mentah.drop(columns=[c for c in KOLOM_LEAKAGE if c in df_mentah.columns])
     df = df.sort_values(["stasiun", "tanggal"]).reset_index(drop=True)
 
-    # tandai PM2.5 asli (bukan hasil pengisian) -> metrik hanya di nilai asli
     df["pm25_asli"] = df["pm25"].notna()
     df[FITUR_POLUTAN] = df.groupby("stasiun")[FITUR_POLUTAN].transform(lambda s: s.ffill(limit=7))
 
@@ -38,7 +37,7 @@ def preprocess(df_mentah: pd.DataFrame) -> pd.DataFrame:
 
     for h in HORIZONS:
         df[f"target_h{h}"] = g["pm25"].shift(-h)
-        df[f"target_h{h}_asli"] = g["pm25_asli"].shift(-h).eq(True)  # NaN -> False
+        df[f"target_h{h}_asli"] = g["pm25_asli"].shift(-h).eq(True)
     return df
 
 

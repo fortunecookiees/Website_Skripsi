@@ -20,9 +20,9 @@ from .teks import tr
 
 KOLOM_WAJIB = ["tanggal", "stasiun"] + FITUR_POLUTAN + FITUR_METEOROLOGI
 KOLOM_ANGKA = FITUR_POLUTAN + FITUR_METEOROLOGI
-MIN_HARI = 4            # hari t + 3 hari sebelumnya (lag 1–3 & rata-rata 3 hari)
-MIN_HARI_VALIDASI = MIN_HARI + len(HORIZONS)  # + 7 hari nilai aktual t+1..t+7 = 11
-MAKS_PESAN = 8          # batas pesan sejenis yang ditampilkan
+MIN_HARI = 4
+MIN_HARI_VALIDASI = MIN_HARI + len(HORIZONS)
+MAKS_PESAN = 8
 _POLA_TANGGAL = re.compile(r"^\d{4}-\d{2}-\d{2}( 00:00(:00)?)?$")
 
 
@@ -31,21 +31,18 @@ class HasilUnggah:
     error: list[str] = field(default_factory=list)
     peringatan: list[str] = field(default_factory=list)
     info: list[str] = field(default_factory=list)
-    kondisi: dict[str, pd.Series] = field(default_factory=dict)   # stasiun -> baris fitur hari terakhir
-    prediksi: pd.DataFrame | None = None                          # stasiun, tanggal_dasar, tanggal, horizon, pm25, kategori
-    data: pd.DataFrame | None = None        # data unggahan setelah preprocessing (untuk grafik validasi)
-    validasi: pd.DataFrame | None = None    # tanggal acuan valid + pred_h1..h7 (lihat data_validasi)
-    hari: dict[str, int] = field(default_factory=dict)              # stasiun -> jumlah hari di file
-    dilewati_meteo: dict[str, int] = field(default_factory=dict)    # stasiun -> tanggal acuan dilewati
+    kondisi: dict[str, pd.Series] = field(default_factory=dict)
+    prediksi: pd.DataFrame | None = None
+    data: pd.DataFrame | None = None
+    validasi: pd.DataFrame | None = None
+    hari: dict[str, int] = field(default_factory=dict)
+    dilewati_meteo: dict[str, int] = field(default_factory=dict)
 
     @property
     def ok(self) -> bool:
         return not self.error and self.prediksi is not None
 
 
-# ---------------------------------------------------------------------
-# Utilitas
-# ---------------------------------------------------------------------
 def _ringkas(pesan: list[str]) -> list[str]:
     if len(pesan) <= MAKS_PESAN:
         return pesan
@@ -59,7 +56,7 @@ def _nama(f: str) -> str:
 
 
 def _baris_excel(idx) -> str:
-    return str(int(idx) + 2)  # +1 header, +1 indeks mulai 1
+    return str(int(idx) + 2)
 
 
 def _daftar_baris(idx_list) -> str:
@@ -107,9 +104,6 @@ def _ke_angka(nilai):
         return _TIDAK_VALID
 
 
-# ---------------------------------------------------------------------
-# Template
-# ---------------------------------------------------------------------
 def buat_template(dataset_mentah: pd.DataFrame, stasiun: str = "DKI1 Bundaran HI") -> bytes:
     """Excel template: sheet 'Data' berisi contoh 4 hari terakhir 1 stasiun dari dataset, sheet 'Petunjuk'."""
     contoh = (dataset_mentah[dataset_mentah["stasiun"] == stasiun].sort_values("tanggal")
@@ -151,9 +145,6 @@ def buat_template(dataset_mentah: pd.DataFrame, stasiun: str = "DKI1 Bundaran HI
     return buf.getvalue()
 
 
-# ---------------------------------------------------------------------
-# Membaca file
-# ---------------------------------------------------------------------
 def baca_file(isi: bytes, nama_file: str) -> pd.DataFrame:
     """Baca .xlsx/.csv menjadi DataFrame mentah (semua kolom apa adanya). ValueError jika gagal."""
     nama = nama_file.lower()
@@ -178,15 +169,11 @@ def baca_file(isi: bytes, nama_file: str) -> pd.DataFrame:
             pemisah = csv.Sniffer().sniff(baris_awal, delimiters=",;\t").delimiter
         except csv.Error:
             pemisah = ";" if baris_awal.count(";") > baris_awal.count(",") else ","
-        # semua dibaca sebagai teks; angka berdesimal koma diubah di validasi()
         return pd.read_csv(io.StringIO(teks), sep=pemisah, dtype=str, keep_default_na=True)
     raise ValueError(tr("Format file tidak didukung. Unggah file .xlsx atau .csv.",
                         "Unsupported file format. Upload an .xlsx or .csv file."))
 
 
-# ---------------------------------------------------------------------
-# Validasi
-# ---------------------------------------------------------------------
 def _cek_kolom(df: pd.DataFrame) -> tuple[list[str], list[str]]:
     """Kolom wajib lengkap? Mengembalikan (error, info). Kolom tambahan diabaikan dengan info."""
     kurang = [k for k in KOLOM_WAJIB if k not in df.columns]
@@ -342,9 +329,6 @@ def validasi(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str], list
     return df.reset_index(drop=True), error, info
 
 
-# ---------------------------------------------------------------------
-# Proses lengkap: validasi -> preprocessing -> prediksi
-# ---------------------------------------------------------------------
 def nilai_spasial_terakhir(dataset: pd.DataFrame) -> pd.DataFrame:
     """Kepadatan & luas RTH tahun terakhir per stasiun (indeks = stasiun)."""
     terakhir = dataset[dataset["tanggal"].dt.year == dataset["tanggal"].dt.year.max()]
@@ -363,7 +347,7 @@ def proses(mentah: pd.DataFrame, models: dict, dataset: pd.DataFrame, rentang: p
     tahun = int(dataset["tanggal"].dt.year.max())
     hasil.info.append(tr(f"Kepadatan penduduk & luas RTH memakai nilai tahun {tahun} dari dataset.",
                          f"Population density & green open space use the {tahun} values from the dataset."))
-    siap = preprocess(data)  # ffill limit=7, lag 1–3, roll3, bulan, hari — identik dengan training
+    siap = preprocess(data)
 
     semua, polutan_kosong, luar = [], [], []
     for st_nama in sorted(siap["stasiun"].unique(), key=list(STASIUN).index):

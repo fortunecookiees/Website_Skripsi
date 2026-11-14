@@ -184,3 +184,7 @@ cython_debug/
 
 # Cache geocoding RTH (scripts/geocode_rth.py)
 data/.cache_geocode_rth.json
+
+docs/
+*.ipynb
+!models/*.ipynb

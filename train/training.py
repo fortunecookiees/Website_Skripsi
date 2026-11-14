@@ -3,7 +3,7 @@ import numpy as np, pandas as pd, matplotlib.pyplot as plt, warnings, pickle, js
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from scipy import stats
-import xgboost as xgb
+import xgboost as xgb, time
 warnings.filterwarnings('ignore'); np.random.seed(42)
 print("xgboost", xgb.__version__)
 
@@ -79,9 +79,13 @@ DEF = dict(n_estimators=600, max_depth=6, learning_rate=0.3,
            min_child_weight=1, reg_alpha=0.0, reg_lambda=1.0)
 print("\n=== BASELINE per horizon ===")
 base = {}
+t0 = time.perf_counter()
 for h in [1,2,3,4,5,6,7]:
     _,_,r,_ = latih(FITUR, h, DEF); base[h]=r
     print(f"t+{h}: MAE={r['MAE']:.3f} RMSE={r['RMSE']:.3f} MAPE={r['MAPE']:.2f}% R2={r['R2']:.3f}")
+
+waktu_bawaan = time.perf_counter() - t0
+print(f"Waktu latih 7 model bawaan: {waktu_bawaan:.1f} detik")
 
 BB = np.array([3, 0.01, 0.50, 0.50, 1, 0.00, 0.50])
 BA = np.array([10, 0.30, 1.00, 1.00, 10, 2.00, 5.00])
@@ -102,6 +106,7 @@ def fitness(p):
     m.fit(Xtr1, ytr1, eval_set=[(Xva1,yva1)], verbose=False)
     r = np.sqrt(mean_squared_error(yva1, m.predict(Xva1))); cache[key]=r; return r
 
+t0 = time.perf_counter()
 rng = np.random.default_rng(42)
 N_PARTIKEL, N_ITERASI = 20, 40
 w_awal, w_akhir, c1, c2 = 0.9, 0.4, 1.5, 1.5
@@ -127,6 +132,9 @@ for it in range(1, N_ITERASI+1):
     riwayat.append(gbs)
     print(f"Iter {it:2d} | w={w:.3f} | gbest RMSE(val) = {gbs:.4f}")
 BEST = dekode(gbest)
+waktu_pso = time.perf_counter() - t0
+n_unik_pso = len(cache)
+print(f"Waktu pencarian PSO: {waktu_pso:.1f} detik | kombinasi unik: {n_unik_pso}")
 print("\nHyperparameter terbaik:", {k:(round(v,4) if isinstance(v,float) else v) for k,v in BEST.items()})
 
 plt.figure(figsize=(7,4))
@@ -136,11 +144,15 @@ plt.title('Kurva Konvergensi PSO'); plt.grid(alpha=.3); plt.tight_layout(); plt.
 
 print("\n=== XGBoost + PSO per horizon ===")
 pso = {}
+t0 = time.perf_counter()
 for h in [1,2,3,4,5,6,7]:
     m, scl, r, _ = latih(FITUR, h, BEST); pso[h]=r
     with open(f'model_pm25_h{h}.pkl','wb') as f:
         pickle.dump({'model':m, 'scaler':scl, 'fitur':FITUR, 'horizon':h}, f)
     print(f"t+{h}: MAE={r['MAE']:.3f} RMSE={r['RMSE']:.3f} MAPE={r['MAPE']:.2f}% R2={r['R2']:.3f}  -> model_pm25_h{h}.pkl")
+
+waktu_final_pso = time.perf_counter() - t0
+print(f"Waktu latih 7 model final PSO: {waktu_final_pso:.1f} detik")
 
 print("\n"+"="*64)
 print(f"{'Horizon':9s}{'Model':10s}{'MAE':>9s}{'RMSE':>9s}{'MAPE':>9s}{'R2':>9s}")
@@ -160,16 +172,29 @@ def dm_test(y, p1, p2, h=1):
     s=np.mean(d)/np.sqrt(vd); return s, 2*(1-stats.t.cdf(abs(s),nT-1))
 
 print("\n=== S1/S2/S3 + Diebold-Mariano (S1 vs S3) ===")
+skenario_json, baris_sk = {}, []
 for h in [1,2,3,4,5,6,7]:
     _,_,r1,p1 = latih(DASAR,     h, BEST)
     _,_,r2,_  = latih(DASAR+ST,  h, BEST)
-    _,_,r3,p3 = latih(FITUR,     h, BEST)
+    _,_,r3,p3 = latih(FITUR, h, BEST)
     a = df.loc[m_te,f'target_h{h}_asli'].values.astype(bool)
     yt = df.loc[m_te,f'target_h{h}'].values[a]
     s, pv = dm_test(yt, p1[a], p3[a], h)
-    tanda = 'SIGNIFIKAN' if (not np.isnan(pv) and pv<0.05) else 'tidak signifikan'
-    print(f"t+{h}: S1={r1['RMSE']:.3f}  S2(+stasiun)={r2['RMSE']:.3f}  S3(+novelty)={r3['RMSE']:.3f} "
-          f"| DM={s:.3f} p={pv:.4f} ({tanda})")
+    print(f"t+{h}: S1={r1['RMSE']:.3f} S2={r2['RMSE']:.3f} S3={r3['RMSE']:.3f} | DM={s:.3f} p={pv:.4f}")
+    for nama, r in [('S1', r1), ('S2', r2), ('S3', r3)]:
+        baris_sk.append({'Horizon': f't+{h}', 'Skenario': nama, **{k: round(float(v), 3) for k, v in r.items()}})
+    skenario_json[str(h)] = {'S1': round(r1['RMSE'], 3), 'S2': round(r2['RMSE'], 3), 'S3': round(r3['RMSE'], 3),
+                             'DM': round(float(s), 3), 'p': round(float(pv), 4),
+                             'lengkap': {nm: {k: round(float(v), 3) for k, v in r.items()}
+                                         for nm, r in [('S1', r1), ('S2', r2), ('S3', r3)]}}
+
+tabel_sk_lengkap = pd.DataFrame(baris_sk)
+print(tabel_sk_lengkap.to_string(index=False))
+print(tabel_sk_lengkap.groupby('Skenario')[['MAE','RMSE','MAPE','R2']].mean().round(3))
+with open('hasil_skenario.json', 'w') as f:
+    json.dump({'sumber': 'Output Colab sel 10, hyperparameter BEST PSO',
+               'metrik': 'RMSE data uji (hanya nilai PM2.5 asli)', 'skenario': skenario_json}, f, indent=2)
+tabel_sk_lengkap.to_excel('tabel_skenario_lengkap.xlsx', index=False)
 
 m1, scl1b, _, _ = latih(FITUR, 1, BEST)
 imp = pd.Series(m1.feature_importances_, index=FITUR).sort_values()
@@ -212,6 +237,8 @@ for h in [1,2,3,4,5,6,7]:
     print(f"{'t+'+str(h):9s}{np.mean(rmses):8.3f} ± {np.std(rmses):.3f}   {np.mean(r2s):8.3f} ± {np.std(r2s):.3f}")
 
 N_EVAL_RS = N_PARTIKEL * (N_ITERASI + 1)
+cache.clear()
+t0 = time.perf_counter()
 rng_rs = np.random.default_rng(42)
 
 best_rs, best_rs_skor = None, np.inf
@@ -225,6 +252,9 @@ for i in range(N_EVAL_RS):
     if (i + 1) % N_PARTIKEL == 0:
         riwayat_rs.append(best_rs_skor)
 BEST_RS = dekode(best_rs)
+waktu_rs = time.perf_counter() - t0
+n_unik_rs = len(cache)
+print(f"Waktu pencarian Random Search: {waktu_rs:.1f} detik | kombinasi unik: {n_unik_rs}")
 print(f"RMSE(val) terbaik RS = {best_rs_skor:.4f} | PSO = {gbs:.4f}")
 print("Hyperparameter RS:", {k:(round(v,4) if isinstance(v,float) else v) for k,v in BEST_RS.items()})
 
@@ -239,8 +269,11 @@ print("\n" + "="*72)
 print(f"{'Horizon':9s}{'Model':10s}{'MAE':>9s}{'RMSE':>9s}{'MAPE':>9s}{'R2':>9s}")
 print("="*72)
 rs = {}
+waktu_final_rs = 0.0
 for h in [1,2,3,4,5,6,7]:
+    t1 = time.perf_counter()
     _,_,r_rs,p_rs  = latih(FITUR, h, BEST_RS); rs[h] = r_rs
+    waktu_final_rs += time.perf_counter() - t1
     _,_,_,  p_pso  = latih(FITUR, h, BEST)
     for nm, r in [('Default',base[h]), ('RandomS',r_rs), ('PSO',pso[h])]:
         print(f"{'t+'+str(h):9s}{nm:10s}{r['MAE']:9.3f}{r['RMSE']:9.3f}{r['MAPE']:8.2f}%{r['R2']:9.3f}")
@@ -251,6 +284,58 @@ for h in [1,2,3,4,5,6,7]:
     sig  = 'SIGNIFIKAN' if (not np.isnan(pv) and pv < 0.05) else 'tidak signifikan'
     print(f"{'':9s}DM RS vs PSO = {s:.3f}, p = {pv:.4f} ({arah}, {sig})")
     print("-"*72)
+
+def periode(t):
+    if t < pd.Timestamp('2025-09-01'): return 'Agustus (29 Jul–31 Agu)'
+    if t < pd.Timestamp('2025-10-01'): return 'September'
+    return 'Okt–Nov (1 Okt–8 Nov)'
+
+baris = []
+for h in [1,2,3,4,5,6,7]:
+    _, _, _, pred = latih(FITUR, h, BEST)
+    uji = df.loc[m_te, ['tanggal', f'target_h{h}', f'target_h{h}_asli']].copy()
+    uji['pred'] = pred
+    uji = uji[uji[f'target_h{h}_asli']]
+    uji['periode'] = (uji['tanggal'] + pd.Timedelta(days=h)).map(periode)
+    for p, g in uji.groupby('periode'):
+        r = metrik(g[f'target_h{h}'], g['pred'], np.ones(len(g), bool))
+        baris.append({'Horizon': f't+{h}', 'Periode': p, 'n': len(g),
+                      **{k: round(v, 3) for k, v in r.items()}})
+
+tabel_periode = pd.DataFrame(baris)
+print(tabel_periode.to_string(index=False))
+tabel_periode.to_excel('tabel_metrik_periode.xlsx', index=False)
+files.download('tabel_metrik_periode.xlsx')
+
+waktu = pd.DataFrame([
+    {'Metode': 'XGBoost bawaan', 'Pencarian (detik)': 0.0, 'Latih 7 model (detik)': waktu_bawaan, 'Kombinasi unik': 1},
+    {'Metode': 'Random Search', 'Pencarian (detik)': waktu_rs, 'Latih 7 model (detik)': waktu_final_rs, 'Kombinasi unik': n_unik_rs},
+    {'Metode': 'PSO', 'Pencarian (detik)': waktu_pso, 'Latih 7 model (detik)': waktu_final_pso, 'Kombinasi unik': n_unik_pso},
+])
+waktu['Total (menit)'] = (waktu['Pencarian (detik)'] + waktu['Latih 7 model (detik)']) / 60
+print(waktu.round(2).to_string(index=False))
+waktu.round(2).to_excel('tabel_waktu_komputasi.xlsx', index=False)
+for f in ['hasil_skenario.json', 'tabel_skenario_lengkap.xlsx', 'tabel_waktu_komputasi.xlsx']:
+    files.download(f)
+
+for nama, m in [('Latih', m_tr), ('Validasi', m_va), ('Uji', m_te)]:
+    g = df[m & df['pm25_asli']]
+    ak = np.mean([x.sort_values('tanggal')['pm25'].where(x['pm25_asli']).autocorr(1)
+                  for _, x in df[m].groupby('stasiun')])
+    print(f"{nama}: n={m.sum()} rata-rata={g['pm25'].mean():.2f} SD={g['pm25'].std(ddof=0):.2f} "
+          f">100={(g['pm25']>100).mean()*100:.1f}% autokorelasi={ak:.3f}")
+
+_, _, _, pred = latih(FITUR, 1, BEST)
+a  = df.loc[m_te, 'target_h1_asli'].values.astype(bool)
+y  = df.loc[m_te, 'target_h1'].values[a]; yh = pred[a]; e = y - yh
+rmse = np.sqrt(np.mean(e**2))
+print(f"SD aktual={y.std():.2f} | SD prediksi={yh.std():.2f} | RMSE={rmse:.3f} | R2={1-(rmse/y.std())**2:.3f}")
+se = np.sort(e**2)[::-1]
+print(f"10% error terbesar menyumbang {se[:len(se)//10].sum()/se.sum()*100:.1f}% total error kuadrat")
+besar = np.abs(e) > 2*rmse
+print(f"data dengan error > 2xRMSE: {besar.sum()} | R2 tanpa data tersebut: {r2_score(y[~besar], yh[~besar]):.3f}")
+lonjak = y > 100
+print(f"data aktual >100: {lonjak.sum()} | rata aktual {y[lonjak].mean():.1f} | rata prediksi {yh[lonjak].mean():.1f}")
 
 with open('hasil_evaluasi.json','w') as f:
     json.dump({'default':base, 'random_search':rs, 'pso':pso, 'persistence':persist,

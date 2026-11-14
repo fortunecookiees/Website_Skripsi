@@ -13,12 +13,11 @@ from .bahasa import kategori, t
 from .format import angka
 
 RTH_HIJAU = "#2E7D4F"
-# basemap citra satelit Esri + lapisan label nama tempat (keduanya tanpa API key)
 TILE = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
 TILE_LABEL = ("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/"
               "World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}")
 TILE_ATTR = "Tiles &copy; Esri &mdash; Esri, Maxar, Earthstar Geographics, GIS User Community"
-RADIUS_RTH_MAKS = 42  # piksel untuk RTH terluas; lainnya sebanding akar luas
+RADIUS_RTH_MAKS = 42
 def _nama_layer() -> str:
     return t("Titik RTH", "Green spaces")
 
@@ -82,7 +81,7 @@ def peta_stasiun(pred_t1: dict[str, float], luas_rth: dict[str, float], key: str
         rth = luas_rth[nama]
         folium.CircleMarker(
             [info["lat"], info["lon"]], radius=RADIUS_RTH_MAKS * math.sqrt(rth / rth_maks),
-            color="#FFFFFF", weight=1, opacity=0.7,  # garis tepi agar terlihat di atas citra satelit
+            color="#FFFFFF", weight=1, opacity=0.7,
             fill=True, fill_color=RTH_HIJAU, fill_opacity=0.35,
         ).add_to(m)
         tooltip = (f"<b>{nama}</b><br>{t('Kec.', 'District')} {info['kecamatan']}<br>"

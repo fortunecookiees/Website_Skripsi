@@ -19,7 +19,7 @@ from core.config import FITUR_METEOROLOGI, FITUR_POLUTAN, FITUR_SPASIAL, FITUR_T
 from core.metrik import metrik_acuan, ringkasan_horizon
 from core.unggah import MIN_HARI, MIN_HARI_VALIDASI, baca_file, hasil_ke_csv, proses
 
-JENDELA_HARI = 7  # rentang grafik validasi: acuan ± 7 hari (sama dengan Evaluation)
+JENDELA_HARI = 7
 
 
 def _tampil(fitur: str, nilai: float) -> str:
@@ -163,7 +163,6 @@ def tampil_validasi(hasil, kunci: str) -> None:
     prediksi = pd.DataFrame({"tanggal": [acuan + pd.Timedelta(days=h) for h in HORIZONS],
                              "pm25": [baris[f"pred_h{h}"] for h in HORIZONS]})
 
-    # kiri: tabel per horizon; kanan: grafik + ringkasan seluruh tanggal (tinggi kedua sisi disamakan lewat CSS)
     with st.container(key="baris_validasi"):
         kiri, kanan = st.columns([1.1, 1], gap="medium")
         with kiri, st.container(key="card_val_tabel"):
@@ -224,7 +223,7 @@ if hasil.peringatan:
 if hasil.info:
     st.html(f'<div class="note" style="margin:-6px 0 14px">{" ".join(hasil.info)}</div>')
 
-riwayat.catat(berkas.file_id, berkas.name, berkas.size, hasil)  # ringkasan saja, hanya di memori sesi
+riwayat.catat(berkas.file_id, berkas.name, berkas.size, hasil)
 n_val = hasil.validasi["tanggal"].nunique() if len(hasil.validasi) else 0
 tab_prediksi, tab_validasi = st.tabs([t("Hasil Prediksi", "Forecast Results"),
                                      t(f"Validasi · {n_val} tanggal", f"Validation · {n_val} dates") if n_val

@@ -17,7 +17,6 @@ from components.logo import NAMA, hiasan_uri, judul_skripsi, logo_svg, tagline
 from components.tema import label
 from core.config import STASIUN, kategori_ispu
 
-# (path, ikon, (nama ID, nama EN), (deskripsi ID, deskripsi EN))
 KARTU_FITUR = [
     ("views/dashboard.py", "space_dashboard", ("Dashboard", "Dashboard"),
      ("Prediksi PM2.5 tujuh hari ke depan per stasiun, mode simulasi, dan peta lokasi SPKU.",
@@ -49,7 +48,7 @@ def hero() -> None:
 
 def _garis(nilai: list[int]) -> str:
     """Garis kecil prediksi 7 hari (nilai yang sama dengan grafik Dashboard), tanpa sumbu."""
-    w, h, p = 180, 30, 3  # kira-kira selebar kartu agar titik tidak lonjong
+    w, h, p = 180, 30, 3
     lo, hi = min(nilai), max(nilai)
     rentang = max(hi - lo, 1)
     xs = [p + i * (w - 2 * p) / (len(nilai) - 1) for i in range(len(nilai))]
@@ -58,19 +57,18 @@ def _garis(nilai: list[int]) -> str:
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" preserveAspectRatio="none">'
            f'<polyline points="{titik}" fill="none" stroke="#648ba6" stroke-width="1.5" stroke-linejoin="round" '
            f'vector-effect="non-scaling-stroke"/><circle cx="{xs[0]:.1f}" cy="{ys[0]:.1f}" r="3" fill="#347653"/></svg>')
-    # st.html membuang tag <svg> mentah, jadi disisipkan sebagai gambar (data URI) seperti logo
     return f'<img class="bsGaris" src="data:image/svg+xml;base64,{b64encode(svg.encode()).decode()}" alt="">'
 
 
 def ringkasan_besok() -> None:
     label(t("Prediksi t+1 dari Kondisi Data Terakhir", "t+1 Forecast from the Latest Data"))
     try:
-        from components import sumber_data as sd  # memuat model & dataset (sama dengan Dashboard Mode Aktual)
+        from components import sumber_data as sd
         sumber = sd.sumber_dashboard()
         pred = {s: sd.prediksi_aktual(s) for s in STASIUN}
         terakhir = sd.tanggal_terakhir_dashboard()
         teks_sumber = sd.label_sumber_dashboard()
-    except Exception:  # noqa: BLE001 — halaman tetap tampil walau data/model gagal dimuat
+    except Exception:  # noqa: BLE001
         st.html('<div class="banner"><span class="dot"></span><span><b class="h">'
                 + t("Ringkasan prediksi belum dapat dimuat", "The forecast summary could not be loaded") + '</b>'
                 + t("Data atau model gagal dimuat. Coba muat ulang halaman, atau buka Dashboard.",

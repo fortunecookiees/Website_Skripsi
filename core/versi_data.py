@@ -27,10 +27,10 @@ SUMBER_PENELITIAN, SUMBER_ADMIN = "penelitian", "admin"
 @dataclass
 class Versi:
     id: str
-    diunggah: str            # ISO 8601 UTC
-    pengunggah: str          # email admin
+    diunggah: str
+    pengunggah: str
     nama_file: str
-    mulai: str               # YYYY-MM-DD
+    mulai: str
     akhir: str
     n_baris: int
     stasiun: list[str]
@@ -64,9 +64,6 @@ class Manifest:
         return cls(d.get("aktif"), [Versi(**v) for v in d.get("versi", [])])
 
 
-# ---------------------------------------------------------------------
-# Operasi manifest (mengembalikan objek baru; penyimpanan dilakukan pemanggil)
-# ---------------------------------------------------------------------
 def tambah_versi(m: Manifest, v: Versi, aktifkan: bool = True) -> Manifest:
     return Manifest(v.id if aktifkan else m.aktif, [v] + [x for x in m.versi if x.id != v.id])
 
@@ -78,9 +75,6 @@ def pilih_aktif(m: Manifest, id_versi: str | None) -> Manifest:
     return Manifest(id_versi, list(m.versi))
 
 
-# ---------------------------------------------------------------------
-# Validasi & persiapan data
-# ---------------------------------------------------------------------
 def validasi_admin(mentah: pd.DataFrame) -> tuple[pd.DataFrame | None, list[str], list[str]]:
     """Validasi yang sama dengan Unggah Data + kelima stasiun wajib ada."""
     data, error, info = validasi(mentah)
@@ -112,15 +106,12 @@ def siapkan_dashboard(data: pd.DataFrame, dataset: pd.DataFrame) -> pd.DataFrame
     return preprocess(data.join(nilai_spasial_terakhir(dataset), on="stasiun"))
 
 
-# ---------------------------------------------------------------------
-# Sumber data Dashboard
-# ---------------------------------------------------------------------
 @dataclass
 class SumberDashboard:
-    jenis: str                       # "penelitian" | "admin"
+    jenis: str
     versi: Versi | None = None
     tahun_spasial: int | None = None
-    peringatan: str | None = None    # mis. data admin gagal dimuat -> kembali ke dataset penelitian
+    peringatan: str | None = None
 
 
 def muat_data_dashboard(unduh: Callable[[str], bytes | None] | None,
@@ -141,10 +132,9 @@ def muat_data_dashboard(unduh: Callable[[str], bytes | None] | None,
         if data is None:
             raise ValueError("berkas versi aktif tidak lolos validasi")
         return siapkan_dashboard(data, dataset), SumberDashboard(SUMBER_ADMIN, v, tahun)
-    except Exception:  # noqa: BLE001 — apa pun penyebabnya Dashboard tetap jalan dengan dataset penelitian
+    except Exception:  # noqa: BLE001
         return dataset, SumberDashboard(SUMBER_PENELITIAN,
                                         peringatan="Data terbaru dari admin gagal dimuat; menampilkan dataset penelitian.")
-    # (hasil fungsi ini di-cache; peringatan diterjemahkan saat ditampilkan, lihat core.teks.terjemah)
 
 
 def label_sumber(s: SumberDashboard, akhir_penelitian: pd.Timestamp, en: bool = False) -> str:

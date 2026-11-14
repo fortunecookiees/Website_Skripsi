@@ -14,11 +14,10 @@ from components.format import tanggal_panjang, tanggal_pendek
 from components.tema import pasang_css, tandai_halaman
 
 st.set_page_config(page_title=f"{NAMA} · {tagline()}", page_icon=str(Path(__file__).with_name("assets") / "logo.png"),
-                   layout="wide", initial_sidebar_state="auto")  # auto: terbuka di desktop, tertutup di HP
+                   layout="wide", initial_sidebar_state="auto")
 pasang_css()
 
-# kunci halaman tetap (dipakai untuk logika); judul mengikuti bahasa aktif
-HALAMAN = {  # kunci: (path, url_path, judul ID, judul EN, ikon)
+HALAMAN = {
     "beranda": ("views/beranda.py", None, "Beranda", "Home", "home"),
     "dashboard": ("views/dashboard.py", "dashboard", "Dashboard", "Dashboard", "space_dashboard"),
     "historis": ("views/historis.py", "historis", "Data Historis", "Historical Data", "monitoring"),
@@ -45,8 +44,6 @@ kunci_aktif = next(k for k, p in PAGE.items() if p.url_path == aktif.url_path)
 
 
 def _catatan_sidebar(kunci: str) -> str:
-    # impor di sini, bukan di atas: sumber_data memuat xgboost/model/dataset (bisa >10 detik saat start dingin),
-    # jadi CSS, brand, dan menu sudah terkirim ke browser lebih dulu dan halaman tidak putih kosong
     from components.sumber_data import periode_uji, rentang_tanggal, sumber_dashboard, tanggal_terakhir_dashboard
     if kunci == "evaluation":
         mulai, akhir, n = periode_uji()
@@ -81,7 +78,6 @@ with st.sidebar:
     st.html(f'<div class="brand">{logo_svg(30)}<div class="brandText">{NAMA}<span>{tagline()}</span></div></div>')
     pemilih()
     sesi = akun.pengguna_aktif()
-    # menu Admin hanya tampilan; halaman Admin sendiri memeriksa ulang role di server
     menu = MENU_UTAMA + ["profil" if sesi else "akun"] + (["admin"] if akun.admin_untuk_menu() else [])
     for k in menu:
         hal = PAGE[k]

@@ -50,7 +50,6 @@ html, body, .stApp, .stApp p, .stApp div, .stApp span, .stApp td, .stApp th, .st
 [data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stBottomBlockContainer"] { background: var(--page); }
 .block-container { padding-top: 2.2rem; padding-bottom: 3rem; padding-left: 2rem; padding-right: 2rem; max-width: none; }
 
-/* ---------------- Sidebar (ink) ---------------- */
 section[data-testid="stSidebar"] {
   /* gradasi hijau sage -> biru teduh, cahaya samar di dekat logo */
   background:
@@ -95,7 +94,6 @@ section[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover p { color: #
 }
 .sideFoot b { color: #f3f8f5; }
 
-/* ---------------- Judul & label ---------------- */
 h2.title { font-size: 25px; font-weight: 700; margin: 0 0 4px; padding: 0; color: var(--ink); letter-spacing: -0.015em; }
 .subt { font-size: 13px; color: var(--sub); margin-bottom: 22px; }
 .lbl {
@@ -103,7 +101,6 @@ h2.title { font-size: 25px; font-weight: 700; margin: 0 0 4px; padding: 0; color
   color: var(--muted); font-weight: 700; margin: 6px 0 6px;
 }
 
-/* ---------------- Pills stasiun & toggle mode ---------------- */
 [data-testid="stButtonGroup"] button {
   border-radius: var(--radius) !important; font-size: 12px; min-height: 34px;
   border: 1px solid var(--line) !important; background: var(--surface); color: var(--sub);
@@ -117,7 +114,6 @@ h2.title { font-size: 25px; font-weight: 700; margin: 0 0 4px; padding: 0; color
 [data-testid="stButtonGroup"] button[aria-checked="true"] p,
 [data-testid="stButtonGroup"] button[aria-pressed="true"] p { color: #fff !important; font-weight: 600; }
 
-/* ---------------- Kartu (st.container dengan key card_*) ---------------- */
 [class*="st-key-card"] {
   border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
   padding: 17px 18px; gap: 0.35rem; box-shadow: var(--shadow);
@@ -132,7 +128,6 @@ h2.title { font-size: 25px; font-weight: 700; margin: 0 0 4px; padding: 0; color
   background: var(--page); border-radius: 100px; padding: 2px 9px;
 }
 
-/* ---------------- Kelompok variabel ---------------- */
 [class*="st-key-grp"] { gap: 0; }
 [class*="st-key-grp_"]:not(.st-key-grp_spasial) {
   border-top: 1px solid var(--line-2); padding-top: 11px; margin-top: 6px;
@@ -170,7 +165,6 @@ h2.title { font-size: 25px; font-weight: 700; margin: 0 0 4px; padding: 0; color
 .note { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
 .note b { color: var(--sub); }
 
-/* ---------------- Angka besar & chip kategori ---------------- */
 .big { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 9px; }
 .big .n { font-size: 44px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
 .big .u { font-size: 11.5px; color: var(--muted); }
@@ -178,7 +172,6 @@ h2.title { font-size: 25px; font-weight: 700; margin: 0 0 4px; padding: 0; color
 .meta { font-size: 11px; color: var(--muted); margin-top: 9px; line-height: 1.6; }
 .tag { display: inline-block; font-size: 10px; font-weight: 600; border-radius: 100px; padding: 2px 9px; }
 
-/* ---------------- Kotak 7 horizon ---------------- */
 .h7 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 8px; }
 .hbox {
   border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 7px; text-align: center;
@@ -189,7 +182,6 @@ h2.title { font-size: 25px; font-weight: 700; margin: 0 0 4px; padding: 0; color
 .hbox .n { font-size: 21px; font-weight: 700; line-height: 1.15; }
 .hbox .k { font-size: 9px; font-weight: 600; margin-top: 5px; border-radius: 100px; padding: 2px 0; }
 
-/* ---------------- Tabel ---------------- */
 table.tbl { width: 100%; border-collapse: collapse; font-size: 11.5px; border: none; }
 table.tbl th {
   text-align: left; font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase;
@@ -206,13 +198,14 @@ table.tbl td {
 table.tbl td.num, table.tbl th.num { text-align: right; }
 table.tbl tr:last-child td { border-bottom: none; }
 table.tbl tr.sel td { font-weight: 600; }
+table.tbl tr.dlmGrup td { border-bottom-color: transparent; }
+table.tbl tr.dlmGrup td[rowspan] { border-bottom-color: var(--line-2); }
+table.tbl tr.grupAkhir td[rowspan] { border-bottom: none; }
 
-/* ---------------- Legend peta ---------------- */
 .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 10.5px; color: var(--sub); margin-top: 10px; }
 .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
 .legend i.rth { border-radius: 50%; }
 
-/* ---------------- Banner ---------------- */
 .banner {
   display: flex; gap: 9px; align-items: flex-start; font-size: 11.5px; background: var(--surface);
   border: 1px solid var(--line); border-left: 3px solid var(--tdksehat); padding: 10px 12px;
@@ -225,7 +218,6 @@ table.tbl tr.sel td { font-weight: 600; }
   .h7 { grid-template-columns: repeat(4, 1fr); }
 }
 
-/* ---------------- Tombol sekunder (reset simulasi) ---------------- */
 .st-key-reset_simulasi { margin-top: 10px; }
 .st-key-reset_simulasi button {
   border: 1px solid var(--line); border-radius: 3px; background: var(--surface-2);
@@ -234,7 +226,6 @@ table.tbl tr.sel td { font-weight: 600; }
 .st-key-reset_simulasi button p { font-size: 12px; }
 .st-key-reset_simulasi button:hover { border-color: var(--accent-line); color: var(--ink); }
 
-/* ---------------- Evaluation ---------------- */
 .stepHint { font-size: 11px; color: var(--muted); line-height: 38px; white-space: nowrap; }
 .stepHint b { color: var(--ink); }
 [class*="st-key-eval_geser"] button, [class*="st-key-val_geser"] button {
@@ -252,7 +243,6 @@ table.tbl tr.spRow td:first-child { border-left: 3px solid var(--spatial); }
 table.tbl tr.gap td { color: var(--muted); text-align: center; padding: 4px; }
 .secHead { margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); }
 
-/* ---------------- Information ---------------- */
 .section { margin-bottom: 22px; }
 .section h3 { font-size: 13.5px; font-weight: 700; margin: 0 0 9px; padding: 0; color: var(--ink); }
 .section p, .infoCard p { font-size: 11.5px; color: var(--sub); line-height: 1.75; margin: 0; }
@@ -271,7 +261,6 @@ table.tbl tr.gap td { color: var(--muted); text-align: center; padding: 4px; }
 .section .infoCard.sp { background: var(--spatial-soft); }
 @media (max-width: 760px) { .two { grid-template-columns: 1fr; } .kv { grid-template-columns: 1fr; } }
 
-/* ---------------- Unggah Data ---------------- */
 .infoBox {
   display: flex; gap: 9px; align-items: flex-start; font-size: 11.5px; background: var(--surface);
   border: 1px solid var(--line); border-left: 3px solid var(--ink); padding: 10px 12px;
@@ -305,7 +294,6 @@ table.tbl tr.grpRow td {
   font-size: 11.5px; line-height: 1.6; margin: 2px 0; padding: 0;
 }
 
-/* ---------------- Akun ---------------- */
 .navNote { font-size: 9.5px; color: var(--muted); margin: -6px 0 6px 12px; letter-spacing: 0.02em; }
 .akunBox {
   margin-top: 16px; padding: 12px; border: 1px solid var(--side-line); border-radius: var(--radius);
@@ -339,7 +327,6 @@ table.tbl tr.grpRow td {
 [class*="st-key-card_akun"] [data-testid="stTextInput"] input { font-size: 13px; }
 [class*="st-key-card_akun"] [data-baseweb="input"] { border-radius: 3px; }
 
-/* ---------------- Unggah · tab Validasi ---------------- */
 .mStrip { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px; margin-top: 12px;
           padding-top: 11px; border-top: 1px solid var(--line-2); }
 .mStrip .m { display: flex; align-items: baseline; gap: 7px; }
@@ -347,7 +334,6 @@ table.tbl tr.grpRow td {
 .mStrip .m b { font-size: 17px; color: var(--ink); font-variant-numeric: tabular-nums; }
 .mStrip .ket { flex-basis: 100%; font-size: 10.5px; color: var(--muted); }
 
-/* ---------------- Dashboard · tombol Prediksi simulasi ---------------- */
 .st-key-prediksi_simulasi { margin-top: 10px; }
 .st-key-prediksi_simulasi button { border-radius: 3px; min-height: 32px; }
 .st-key-prediksi_simulasi button p { font-size: 12px; font-weight: 600; }
@@ -360,7 +346,6 @@ table.tbl tr.grpRow td {
 .st-key-eval_prediksi button { border-radius: 3px; min-height: 34px; padding: 4px 28px; }
 .st-key-eval_prediksi button p { font-size: 12px; font-weight: 600; }
 
-/* ---------------- Responsif (HP / layar sempit) ---------------- */
 @media (max-width: 640px) {
   .block-container { padding: 3.2rem 1rem 2.5rem; }
   h2.title { font-size: 21px; }
@@ -889,7 +874,6 @@ section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] { padding-
 table.tblMendatar td:first-child, table.tblMendatar th:first-child { white-space: nowrap; }
 .st-key-card_val_tabel table.tbl td:nth-child(2) { white-space: nowrap; }
 
-/* ---------------- Masuk / Daftar: kartu dua sisi ---------------- */
 [class*="st-key-auth_masuk"], [class*="st-key-auth_daftar"] {
   background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
   box-shadow: 0 10px 34px rgba(34,53,44,.10); margin-top: 8px; padding: 0 !important;
@@ -943,7 +927,6 @@ table.tblMendatar td:first-child, table.tblMendatar th:first-child { white-space
 .st-key-card_val_tabel table.tbl td { padding-top: 18px; padding-bottom: 18px; }
 .st-key-card_val_tabel > [data-testid="stElementContainer"]:has(.mStrip) { margin-top: auto; }
 
-/* ---------------- Information: penyusun, baris, panduan ---------------- */
 /* bagian berdampingan sama tinggi */
 [class*="st-key-baris_info"] { margin-bottom: 14px; }
 [class*="st-key-baris_info"] [data-testid="stHorizontalBlock"] { align-items: stretch; }
@@ -995,7 +978,6 @@ table.tblMendatar td:first-child, table.tblMendatar th:first-child { white-space
 .pdIsi { font-size: 12px; color: var(--sub); line-height: 1.7; margin: 4px 0 0; position: relative; }
 .pdIsi b { color: var(--ink); font-weight: 600; }
 
-/* ---------------- Profil: kartu vertikal + pengaturan bertab ---------------- */
 .st-key-baris_profil [data-testid="stLayoutWrapper"]:has(> [class*="st-key-card_profil"]) { flex: 1 1 auto; display: flex; flex-direction: column; }
 .st-key-baris_profil [class*="st-key-card_profil"] { flex: 1 1 auto; }
 .st-key-card_profil_info { background: var(--grad-hero) !important; border: none !important; color: #fff;
@@ -1030,7 +1012,6 @@ table.tblMendatar td:first-child, table.tblMendatar th:first-child { white-space
 .st-key-baris_admin_data [data-testid="stLayoutWrapper"]:has(> [class*="st-key-card_admin"]) { flex: 1 1 auto; display: flex; flex-direction: column; }
 .st-key-baris_admin_data [class*="st-key-card_admin"] { flex: 1 1 auto; }
 
-/* ---------------- Dashboard · papan hasil simulasi ---------------- */
 .papanSim { background: linear-gradient(135deg, #1f3a2e 0%, #24443f 50%, #2b4a5e 100%); color: #fff; border-radius: 14px;
             padding: 24px 26px 20px; margin-top: 14px; box-shadow: 0 10px 30px rgba(34,53,44,.18);
             animation: naik 1.1s cubic-bezier(.33, 1, .68, 1) both; }

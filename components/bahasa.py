@@ -12,12 +12,10 @@ KUNCI = "bahasa"
 ID, EN = "id", "en"
 PILIHAN = {ID: "ID", EN: "EN"}
 
-# nama kategori ISPU (core/config.py tetap memakai nama Indonesia sebagai kunci)
 KATEGORI_EN = {"Baik": "Good", "Sedang": "Moderate", "Tidak Sehat": "Unhealthy",
                "Sangat Tidak Sehat": "Very Unhealthy", "Berbahaya": "Hazardous"}
 
 
-# saran PermenLHK 14/2020 untuk PM2.5: (kelompok sensitif, setiap orang)
 SARAN_EN = {
     "Baik": (None, "Very good for outdoor activities"),
     "Sedang": ("Reduce prolonged or heavy physical activity", "Outdoor activities are still fine"),
@@ -43,11 +41,9 @@ def saran(nama_kategori: str) -> tuple[str | None, str]:
 def bahasa() -> str:
     nilai = st.session_state.get(KUNCI)
     if nilai not in PILIHAN:
-        # pertama kali dari URL; atau segmented control dikosongkan (klik ulang) -> kembali ke Indonesia.
-        # Aman karena dipanggil app.py sebelum widget pemilih dibuat pada run ini.
         nilai = EN if KUNCI not in st.session_state and st.query_params.get("lang") == EN else ID
         st.session_state[KUNCI] = nilai
-    atur_inggris(nilai == EN)  # pesan dari core/ & auth/ ikut bahasa ini
+    atur_inggris(nilai == EN)
     return nilai
 
 

@@ -9,7 +9,6 @@ from .bahasa import kategori, t
 from .format import BULAN, tanggal_pendek
 
 INK, MUTED, LINE = "#347653", "#8C9B96", "#EDF1EF"
-# ambang kategori: (nilai, warna garis, warna teks)
 AMBANG = [(50, "#B9CFC0", "#3F7A57"), (100, "#D8C48A", "#9A7A18"),
           (200, "#E0B4B0", "#B23A32"), (300, "#9E9E9E", "#232323")]
 
@@ -86,7 +85,6 @@ def grafik_sekitar_acuan(aktual: pd.DataFrame, acuan: pd.Timestamp, prediksi: pd
     st.plotly_chart(fig, key=key, config={"displayModeBar": False}, width="stretch")
 
 
-# stasiun dibedakan dengan nada abu-abu + pola garis (warna hanya untuk kategori ISPU)
 GAYA_STASIUN = [("#347653", "solid"), ("#648BA6", "solid"), ("#5A9676", "dot"),
                 ("#9DB8CC", "solid"), ("#546660", "dash")]
 
@@ -112,7 +110,6 @@ def grafik_historis(data: pd.DataFrame, stasiun: list[str], key: str, tinggi: in
             fig.add_hline(y=batas, line=dict(color=warna, width=1, dash="dash"),
                           annotation_text=f"ISPU {batas}", annotation_position="top right",
                           annotation_font=dict(size=9, color=teks), annotation_bgcolor="rgba(255,255,255,.85)")
-    # label sumbu-x berbahasa Indonesia (plotly memakai nama bulan Inggris)
     tgl = pd.Series(sorted(data["tanggal"].unique()))
     if len(tgl):
         idx = sorted({round(i * (len(tgl) - 1) / 5) for i in range(6)})

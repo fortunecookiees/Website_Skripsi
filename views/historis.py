@@ -67,7 +67,6 @@ def panel_filter():
             diisi = st.toggle(t("Sertakan data diisi", "Include filled data"), key="hs_diisi",
                               help=t("Nilai PM2.5 hasil pengisian data kosong (forward fill, maks. 7 hari).",
                                      "PM2.5 values from filling missing data (forward fill, max. 7 days)."))
-    # saat baru memilih tanggal awal, date_input mengembalikan 1 tanggal saja
     mulai = rentang[0] if len(rentang) > 0 else MULAI
     akhir = rentang[1] if len(rentang) > 1 else AKHIR
     return stasiun or [], (mulai, akhir), kategori or [], frek, diisi
@@ -89,7 +88,6 @@ def baris_kpi(data: pd.DataFrame) -> None:
     ], ispu=[r["rata"], p["pm25"], lo["pm25"], None]))
 
 
-# --- halaman ------------------------------------------------------------
 judul(t("Data Historis", "Historical Data"),
       t("Jelajahi indeks ISPU PM2.5 harian dari dataset penelitian",
         "Explore the daily PM2.5 ISPU index of the research dataset"))

@@ -23,7 +23,7 @@ from core.versi_data import (PATH_MANIFEST, Manifest, buat_versi, ke_csv, label_
 
 KUNCI_PESAN = "admin_pesan"
 KUNCI_PENGGUNA = "admin_pengguna"
-KUNCI_DATA = "admin_data_valid"   # (file_id, nama file, DataFrame lolos validasi)
+KUNCI_DATA = "admin_data_valid"
 
 
 def _waktu(iso: str | None, jam: bool = True) -> str:
@@ -58,15 +58,12 @@ def _admin_atau_tolak():
     return admin
 
 
-# ---------------------------------------------------------------------
-# Kelola Pengguna
-# ---------------------------------------------------------------------
 def _aksi_pengguna(klien, jenis: str, id_pengguna: str) -> None:
     admin = _admin_atau_tolak()
     if admin is None:
         return
     try:
-        target = klien.ambil_pengguna(id_pengguna)  # status terbaru dari server, bukan dari tabel di layar
+        target = klien.ambil_pengguna(id_pengguna)
         if (alasan := boleh_diubah(admin.id, target)) is not None:
             _pesan("err", alasan)
             return
@@ -168,11 +165,8 @@ def tab_pengguna(klien, admin) -> None:
             "set in the Supabase dashboard.") + '</div>')
 
 
-# ---------------------------------------------------------------------
-# Perbarui Data Dashboard
-# ---------------------------------------------------------------------
 def _manifest(klien, bucket: str) -> Manifest:
-    return Manifest.dari_json(klien.unduh(bucket, PATH_MANIFEST))   # selalu baca terbaru (tanpa cache)
+    return Manifest.dari_json(klien.unduh(bucket, PATH_MANIFEST))
 
 
 def _simpan(klien, bucket: str, aktifkan: bool) -> None:
@@ -191,7 +185,7 @@ def _simpan(klien, bucket: str, aktifkan: bool) -> None:
         return
     sd.segarkan_dashboard()
     st.session_state.pop(KUNCI_DATA, None)
-    st.session_state["admin_berkas_ver"] = st.session_state.get("admin_berkas_ver", 0) + 1  # kosongkan uploader
+    st.session_state["admin_berkas_ver"] = st.session_state.get("admin_berkas_ver", 0) + 1
     _pesan("ok", t(f"Versi {v.id} tersimpan" + (" dan dipakai Dashboard untuk semua pengguna." if aktifkan else "."),
                    f"Version {v.id} saved" + (" and now used by the Dashboard for all users." if aktifkan else ".")))
 
@@ -236,11 +230,9 @@ def tab_data(klien, bucket: str) -> None:
         return
     tahun_spasial = int(sd.dataset()["tanggal"].dt.year.max())
 
-    # status & unggah berdampingan; riwayat versi tetap selebar halaman
     with st.container(key="baris_admin_data"):
         kiri, kanan = st.columns([1, 1.45], gap="medium")
         with kiri:
-            # status sumber data saat ini (dibaca langsung dari Storage, bukan cache Dashboard)
             _, sumber = muat_data_dashboard(lambda path: klien.unduh(bucket, path), sd.dataset())
             with st.container(key="card_admin_status"):
                 st.html(judul_kartu(t("Sumber Data Dashboard Saat Ini", "Current Dashboard Data Source"),
@@ -319,7 +311,6 @@ def tab_data(klien, bucket: str) -> None:
                                 on_click=_ganti_aktif, args=(klien, bucket, v.id))
 
 
-# --- halaman ------------------------------------------------------------
 judul("Admin", t("Kelola pengguna dan data Dashboard", "Manage users and Dashboard data"))
 admin = akun.wajib_admin("views/admin.py")
 konfigurasi, masalah = akun.klien_admin()

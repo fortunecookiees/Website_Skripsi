@@ -18,8 +18,6 @@ def tr(id_: str, en: str) -> str:
     return en if _INGGRIS.get() else id_
 
 
-# Pesan tetap dari auth/ (kunci = teks Indonesia apa adanya). Dipakai lewat terjemah() agar konstanta
-# & tes yang memeriksa teks Indonesia tidak berubah.
 _PESAN_EN = {
     "Email sudah terdaftar. Silakan masuk atau gunakan email lain.":
         "This email is already registered. Sign in or use another email.",

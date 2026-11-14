@@ -28,13 +28,13 @@ ROOT = Path(__file__).resolve().parent.parent
 SUMBER = ROOT / "data" / "daftar_alamat_rth_per_kecamatan.xlsx"
 KELUARAN = ROOT / "data" / "rth_koordinat.csv"
 CACHE = ROOT / "data" / ".cache_geocode_rth.json"
-MANUAL = ROOT / "data" / "rth_manual.csv"  # koordinat dari Google Maps; baris dengan lat/lon kosong diabaikan
+MANUAL = ROOT / "data" / "rth_manual.csv"
 
 USER_AGENT = "pm25-jakarta-skripsi/1.0 (geocoding RTH sekali jalan; skripsi Teknik Informatika Untar)"
 JEDA_DETIK = 1.1
-VIEWBOX = [(-6.10, 106.65), (-6.40, 107.00)]  # arahan pencarian ke Jakarta (bukan pembatas)
+VIEWBOX = [(-6.10, 106.65), (-6.40, 107.00)]
 
-KECAMATAN = {  # sheet -> (stasiun, kota)
+KECAMATAN = {
     "MENTENG": ("DKI1 Bundaran HI", "Jakarta Pusat"),
     "KELAPA GADING": ("DKI2 Kelapa Gading", "Jakarta Utara"),
     "JAGAKARSA": ("DKI3 Jagakarsa", "Jakarta Selatan"),
@@ -42,16 +42,11 @@ KECAMATAN = {  # sheet -> (stasiun, kota)
     "KEBON JERUK": ("DKI5 Kebon Jeruk", "Jakarta Barat"),
 }
 
-# Koreksi data sumber: (sheet, no, luas lama) -> luas benar. Dicocokkan 3 kunci agar tidak salah baris.
-KOREKSI_LUAS = {("JAGAKARSA", 1, 1731952.0): 17319.52}  # Fly Over Tanjung Barat (Bawah)
+KOREKSI_LUAS = {("JAGAKARSA", 1, 1731952.0): 17319.52}
 
-# OSM Indonesia: provinsi admin_level 4, kota 5, kecamatan 6, kelurahan 7.
 LEVEL_KECAMATAN, LEVEL_KELURAHAN = 6, 7
 
 
-# ---------------------------------------------------------------------
-# Cache & pemanggilan Nominatim
-# ---------------------------------------------------------------------
 class Geocoder:
     def __init__(self):
         self.cache = json.loads(CACHE.read_text(encoding="utf-8")) if CACHE.exists() else {}
@@ -76,9 +71,6 @@ class Geocoder:
         return self.cache[kunci]
 
 
-# ---------------------------------------------------------------------
-# Geometri: titik di dalam (Multi)Polygon GeoJSON, ray casting dengan dukungan lubang
-# ---------------------------------------------------------------------
 def _dalam_cincin(lon: float, lat: float, cincin: list) -> bool:
     dalam, n = False, len(cincin)
     for i in range(n):
@@ -111,20 +103,16 @@ def ambil_polygon(g: Geocoder, kueri: str, level: int | None = None) -> dict:
     sys.exit(f"Polygon tidak ditemukan untuk '{kueri}'. Periksa koneksi atau ubah kueri.")
 
 
-# ---------------------------------------------------------------------
-# Pembersihan teks alamat/nama sebelum dicari
-# ---------------------------------------------------------------------
 _GANTI = [
     (r"\bJH\.\s*", "Jalur Hijau "), (r"\bJL\.\s*", "Jalan "), (r"\bJLN?\b\.?\s*", "Jalan "),
-    # kata "Kelurahan/Kecamatan" dibuang: membuat Nominatim condong ke puskesmas/kantor kecamatan
     (r"\bKEL(URAHAN)?\.?\s+", ""), (r"\bKEC(AMATAN)?\.?\s+", ""), (r"\bKOTA\s+(?=JAKARTA)", ""),
     (r"\bTPU\.\s*", "TPU "),
 ]
 _BUANG = [
-    r"\bRT\.?\s*\d+\s*/?\s*RW\.?\s*\d+", r"\bRT\.?\s*\d+", r"\bRW\.?\s*\d+",       # RT/RW
-    r"\bS\.?\s*/?\s*D\.?\b.*?(?=,|$)",                                            # "S/D ..." sampai koma
+    r"\bRT\.?\s*\d+\s*/?\s*RW\.?\s*\d+", r"\bRT\.?\s*\d+", r"\bRW\.?\s*\d+",
+    r"\bS\.?\s*/?\s*D\.?\b.*?(?=,|$)",
     r"\bSISI\s+(UTARA|SELATAN|TIMUR|BARAT)\b", r"\(\s*BAWAH\s*\)", r"[()]",
-    r"\bDAERAH KHUSUS IBUKOTA JAKARTA\b", r"\b\d{5}\b",                            # provinsi panjang & kode pos
+    r"\bDAERAH KHUSUS IBUKOTA JAKARTA\b", r"\b\d{5}\b",
 ]
 
 
@@ -142,9 +130,6 @@ def bersihkan(teks) -> str:
     return s
 
 
-# ---------------------------------------------------------------------
-# Proses per baris
-# ---------------------------------------------------------------------
 def muat_sumber() -> pd.DataFrame:
     lembar = pd.read_excel(SUMBER, sheet_name=list(KECAMATAN))
     df = pd.concat([d.assign(kecamatan=nama) for nama, d in lembar.items()], ignore_index=True)
@@ -170,27 +155,23 @@ def kandidat_kueri(r: pd.Series, kota: str) -> list[tuple[str, str]]:
         out.append((", ".join(x for x in [nama, kel, kec, kota] if x), "alamat"))
     if kel:
         out.append((f"{kel}, {kec}, {kota}", "kelurahan"))
-    return list(dict.fromkeys(out))  # buang kueri ganda, urutan dipertahankan
+    return list(dict.fromkeys(out))
 
 
-# Objek OSM yang memang berupa RTH (taman/hutan/makam/area hijau) -> presisi "objek"
 OBJEK_RTH = {
     "leisure": {"park", "garden", "nature_reserve", "recreation_ground", "playground", "common"},
     "landuse": {"cemetery", "recreation_ground", "forest", "grass", "village_green", "meadow"},
     "natural": {"wood", "scrub", "grassland"},
     "amenity": {"grave_yard"},
 }
-# Jenis RTH di data -> objek OSM yang sesuai (TAMAN tidak boleh cocok ke makam, TPU harus makam, dst.)
 _TAMAN = {("leisure", t) for t in ("park", "garden", "recreation_ground", "playground", "common")}     | {("landuse", t) for t in ("recreation_ground", "grass", "village_green")}
 _MAKAM = {("landuse", "cemetery"), ("amenity", "grave_yard")}
 _HUTAN = {("natural", t) for t in ("wood", "scrub", "grassland")} | {("landuse", "forest"), ("leisure", "park"),
                                                                        ("leisure", "nature_reserve")}
 SESUAI_JENIS = {"TAMAN": _TAMAN, "TPU": _MAKAM, "HUTAN": _HUTAN, "KEBUN BIBIT": _TAMAN | _HUTAN,
                 "JALUR HIJAU": _TAMAN | _HUTAN}
-# Ruas jalan -> presisi "jalan" (lokasi hanya sepanjang jalan, tidak ditampilkan di peta)
 JENIS_JALAN = {"motorway", "trunk", "primary", "secondary", "tertiary", "unclassified", "residential",
                "living_street", "service", "pedestrian", "footway", "path", "track", "road"}
-# Kata umum yang tidak membedakan satu RTH dengan RTH lain (tidak dipakai untuk cek nama)
 KATA_UMUM = {"TAMAN", "HUTAN", "KOTA", "TPU", "RTH", "RPTRA", "JALUR", "HIJAU", "JALAN", "JL", "JLN", "RT", "RW",
              "KEBUN", "BIBIT", "MAKAM", "PEMAKAMAN", "UMUM", "RAYA", "DAN", "DI", "KEL", "KEC", "KELURAHAN",
              "KECAMATAN", "JAKARTA", "PUSAT", "UTARA", "SELATAN", "TIMUR", "BARAT", "NO", "GG", "GANG", "JH"}
@@ -205,7 +186,6 @@ def jenis_hasil(h: dict, nama_rth: str, jenis_rth: str) -> str | None:
     """'objek' | 'jalan' | None (ditolak: kantor, stasiun, halte, toko, RTH lain/jenis berbeda, dll.)."""
     kelas, tipe = h.get("class"), h.get("type")
     if tipe in OBJEK_RTH.get(kelas, set()):
-        # objek yang sama: jenisnya sesuai DAN nama OSM memuat minimal satu kata khas dari nama RTH
         sesuai = (kelas, tipe) in SESUAI_JENIS.get(str(jenis_rth).upper(), set())
         return "objek" if sesuai and _kata_khas(h.get("name")) & _kata_khas(nama_rth) else None
     if kelas == "highway" and tipe in JENIS_JALAN:
@@ -213,7 +193,7 @@ def jenis_hasil(h: dict, nama_rth: str, jenis_rth: str) -> str | None:
     return None
 
 
-URUTAN_PRESISI = ["objek", "jalan", "kelurahan"]  # objek didahulukan meski ditemukan di tingkat kueri lebih akhir
+URUTAN_PRESISI = ["objek", "jalan", "kelurahan"]
 
 
 def geocode_baris(g: Geocoder, r: pd.Series, kota: str, poly_jkt: dict, poly_kec: dict) -> dict:
@@ -221,11 +201,11 @@ def geocode_baris(g: Geocoder, r: pd.Series, kota: str, poly_jkt: dict, poly_kec
     terbaik: dict[str, dict] = {}
     for kueri, tingkat in kandidat_kueri(r, kota):
         if tingkat == "kelurahan" and ("objek" in terbaik or "jalan" in terbaik):
-            break  # pusat kelurahan tidak diperlukan
+            break
         for h in g.cari(kueri):
             level = admin_level(h)
             if tingkat == "kelurahan":
-                if level != LEVEL_KELURAHAN:  # tingkat 3 hanya menerima batas kelurahan
+                if level != LEVEL_KELURAHAN:
                     continue
                 presisi = "kelurahan"
             elif level == LEVEL_KELURAHAN:

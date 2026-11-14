@@ -72,7 +72,6 @@ def user(i, peran=None, ban=None):
             "last_sign_in_at": None, "banned_until": ban, "email_confirmed_at": "2026-10-01T00:00:00Z"}
 
 
-# ---------------------------------------------------------------------
 print("== Service key ==")
 cek("publishable ditolak sebagai service key", cek_service_key("sb_publishable_abc") is not None)
 cek("sb_secret diterima", cek_service_key("sb_secret_abc") is None)
@@ -143,7 +142,6 @@ cek("status Nonaktif dari banned_until masa depan",
     Pengguna("u", "e", "n", None, None, None, "2999-01-01T00:00:00Z", True).status == "Nonaktif"
     and Pengguna("u", "e", "n", None, None, None, "2000-01-01T00:00:00Z", True).status == "Aktif")
 
-# ---------------------------------------------------------------------
 print("\n== Alur versi data Dashboard ==")
 mentah = muat_dataset()
 dataset = preprocess(mentah)
@@ -163,7 +161,7 @@ data4, err, _ = validasi_admin(contoh(stasiun=["DKI1 Bundaran HI", "DKI2 Kelapa 
                                                "DKI4 Lubang Buaya"]))
 cek("unggahan tanpa 5 stasiun ditolak", data4 is None and "kelima stasiun" in " ".join(err), " ".join(err))
 data_a, err, _ = validasi_admin(contoh(n=6))
-data_b, _, _ = validasi_admin(contoh(n=8, geser_tahun=1))   # data 2026 (di luar tahun nilai spasial)
+data_b, _, _ = validasi_admin(contoh(n=8, geser_tahun=1))
 cek("unggahan 5 stasiun lolos", data_a is not None and data_b is not None, " ".join(err))
 
 
@@ -234,7 +232,6 @@ sto.rusak = False; sto.isi[va.path] = b"bukan,csv,yang\nbenar"
 df, s = muat_data_dashboard(sto.unduh, dataset)
 cek("berkas versi rusak -> fallback dataset penelitian", df is dataset and s.peringatan is not None)
 
-# ---------------------------------------------------------------------
 print("\n== Halaman Admin (AppTest, sesi & server tiruan) ==")
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
@@ -286,7 +283,7 @@ cek("  akun sendiri tanpa tombol aksi, akun lain punya tombol",
 dipanggil = []
 modul_admin.KlienAdmin.ambil_pengguna = lambda self, uid: modul_admin._pengguna_dari(user(int(uid[1:])) | {"id": uid})
 modul_admin.KlienAdmin.nonaktifkan = lambda self, uid: dipanggil.append(uid)
-PERAN["peran"] = None   # role dicabut setelah halaman terbuka
+PERAN["peran"] = None
 next(b for b in at.button if b.key == "off_u2").click().run()
 cek("aksi setelah role dicabut -> ditolak server, tidak ada ban", dipanggil == [] and "Akses ditolak" in teks(at))
 at = buka("admin")

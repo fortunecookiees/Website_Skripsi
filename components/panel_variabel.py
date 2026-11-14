@@ -9,7 +9,6 @@ from core.simulasi import samakan_riwayat_pm25
 from .bahasa import inggris, t
 from .format import BULAN, HARI, angka
 
-# fitur: (nama singkat, satuan, jumlah desimal tampilan, langkah slider)
 TAMPILAN = {
     "luas_rth_km2": ("Luas RTH", "km²", 3, 0.001),
     "kepadatan_penduduk_jiwa_km2": ("Kepadatan", "j/km²", 0, 1.0),
@@ -28,7 +27,6 @@ TAMPILAN = {
     "no2": ("NO₂", "ISPU", 0, 1.0),
 }
 
-# versi Inggris nama singkat & satuan (yang tidak ada di sini sama di kedua bahasa)
 NAMA_EN = {"luas_rth_km2": "GOS area", "kepadatan_penduduk_jiwa_km2": "Density", "suhu_c": "Temperature",
            "kelembapan_pct": "Humidity", "curah_hujan_mm": "Rainfall", "tutupan_awan_pct": "Cloud cover",
            "kecepatan_angin_kmh": "Wind speed", "tekanan_hpa": "Pressure", "arah_angin_deg": "Wind dir."}
@@ -40,14 +38,12 @@ PANJANG_EN = {
     "arah_angin_deg": "wind direction",
 }
 
-# nama dalam kalimat (huruf kecil kecuali singkatan)
 PANJANG = {
     "luas_rth_km2": "luas RTH", "kepadatan_penduduk_jiwa_km2": "kepadatan penduduk", "suhu_c": "suhu",
     "kelembapan_pct": "kelembapan", "curah_hujan_mm": "curah hujan", "tutupan_awan_pct": "tutupan awan",
     "kecepatan_angin_kmh": "kecepatan angin", "tekanan_hpa": "tekanan udara", "arah_angin_deg": "arah angin",
 }
 
-# urutan tampilan mengikuti desain (urutan input model tetap FITUR di core/config.py)
 KELOMPOK = [
     ("spasial", ("Variabel Spasial", "Spatial Variables"), ["luas_rth_km2", "kepadatan_penduduk_jiwa_km2"],
      "#347653", ""),
@@ -80,7 +76,6 @@ def _baris_slider(fitur: str, nilai: float, rentang: pd.Series, terkunci: bool, 
         return float("nan")
     lo, hi = float(rentang["min"]), float(rentang["max"])
     if kunci not in st.session_state:
-        # panel terkunci (Mode Aktual) menampilkan kondisi aktual; slider simulasi mulai dari ujung kiri (minimum dataset)
         st.session_state[kunci] = min(max(float(nilai), lo), hi) if terkunci else lo
     with c_slider:
         v = st.slider(nama, min_value=lo, max_value=hi, step=langkah,

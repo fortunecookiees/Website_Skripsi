@@ -7,7 +7,7 @@ import pandas as pd
 from .config import KATEGORI_ISPU, STASIUN, bulatkan_ispu, kategori_ispu
 
 URUTAN_KATEGORI = [nama for _, nama, *_ in KATEGORI_ISPU]
-FREKUENSI = {"Harian": None, "Mingguan": "W-MON", "Bulanan": "MS"}  # minggu diberi label Senin awal minggu
+FREKUENSI = {"Harian": None, "Mingguan": "W-MON", "Bulanan": "MS"}
 
 
 def saring(data: pd.DataFrame, stasiun: list[str], mulai, akhir, kategori: list[str] | None = None,
@@ -42,7 +42,7 @@ def ringkasan(data: pd.DataFrame) -> dict:
         return {"n": 0}
     puncak = data.loc[data["pm25"].idxmax()]
     terendah = data.loc[data["pm25"].idxmin()]
-    sehat = data["kategori"].isin(URUTAN_KATEGORI[:2]).mean() * 100  # Baik + Sedang
+    sehat = data["kategori"].isin(URUTAN_KATEGORI[:2]).mean() * 100
     return {"n": len(data), "n_stasiun": data["stasiun"].nunique(), "rata": float(data["pm25"].mean()),
             "median": float(data["pm25"].median()), "puncak": puncak, "terendah": terendah,
             "persen_baik_sedang": float(sehat), "n_diisi": int((~data["pm25_asli"]).sum())}

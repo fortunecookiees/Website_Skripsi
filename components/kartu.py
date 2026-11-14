@@ -56,7 +56,7 @@ def teks_perubahan(pred_t1: float, pm25_hari_ini: float) -> str:
 def teks_puncak(prediksi: pd.DataFrame) -> str:
     """Kalimat puncak 7 hari. 'Melewati ambang' hanya jika kategori puncak berbeda dari t+1."""
     nilai = [kategori_ispu(v)["nilai"] for v in prediksi["pm25"]]
-    i = max(range(len(nilai)), key=nilai.__getitem__)  # puncak pertama jika ada nilai sama
+    i = max(range(len(nilai)), key=nilai.__getitem__)
     r = prediksi.iloc[i]
     k_puncak, k_t1 = kategori_ispu(r["pm25"]), kategori_ispu(prediksi["pm25"].iloc[0])
     if i == 0:

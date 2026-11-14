@@ -10,7 +10,7 @@ from components.format import tanggal_pendek, waktu_jakarta
 from components.kartu import judul_kartu
 from components.tema import judul, label
 
-KUNCI_PROFIL = "profil_data"          # (access token, Profil) — dimuat ulang jika token berganti
+KUNCI_PROFIL = "profil_data"
 KUNCI_PESAN_NAMA = "profil_pesan_nama"
 KUNCI_PESAN_PW = "profil_pesan_pw"
 
@@ -47,14 +47,14 @@ def proses_nama() -> None:
 def proses_password() -> None:
     ss = st.session_state
     lama, baru, konfirmasi = (ss.get(k, "") for k in ("pw_lama", "pw_baru", "pw_konfirmasi"))
-    for k in ("pw_lama", "pw_baru", "pw_konfirmasi"):  # password tidak dibiarkan tertinggal di form
+    for k in ("pw_lama", "pw_baru", "pw_konfirmasi"):
         ss[k] = ""
     if error := validasi_ganti_password(lama, baru, konfirmasi):
         ss[KUNCI_PESAN_PW] = ("err", error)
         return
     sesi, k = akun.pengguna_aktif(), akun.klien()
     try:
-        sesi_baru = k.masuk(sesi.email, lama)  # verifikasi password lama + token segar
+        sesi_baru = k.masuk(sesi.email, lama)
     except AuthError as e:
         pesan = t("Password lama salah.", "Incorrect old password.") if e.kode == "invalid_credentials" else e.pesan
         ss[KUNCI_PESAN_PW] = ("err", [pesan])

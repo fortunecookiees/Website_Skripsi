@@ -22,7 +22,6 @@ models = muat_model()
 df = preprocess(muat_dataset())
 print(f"Model & data dimuat dalam {time.perf_counter() - t0:.1f} detik\n")
 
-# --- 1. Prediksi 7 hari dari kondisi terakhir --------------------------
 baris = kondisi_terakhir(df, stasiun)
 print(f"=== {stasiun} | kondisi terakhir {baris['tanggal']:%d %b %Y} ===")
 for f in FITUR:
@@ -34,13 +33,11 @@ print(f"\n{'Horizon':8s}{'Tanggal':14s}{'PM2.5':>8s}  Kategori")
 for _, r in hasil.iterrows():
     print(f"t+{r['horizon']:<6d}{r['tanggal']:%d %b %Y}   {r['pm25']:7.1f}  {kategori_ispu(r['pm25'])['kategori']}")
 
-# --- 2. Ringkasan t+1 semua stasiun ------------------------------------
 print("\n=== Prediksi t+1 kelima stasiun ===")
 for st in STASIUN:
     p = prediksi_7_hari(models, kondisi_terakhir(df, st)).iloc[0]
     print(f"  {st:20s} {p['tanggal']:%d %b %Y}  {p['pm25']:6.1f}  {kategori_ispu(p['pm25'])['kategori']}")
 
-# --- 3. Verifikasi: metrik data uji harus sama dengan hasil_evaluasi.json
 uji, batas = data_evaluasi(df)
 pred = prediksi_batch(models, uji)
 ev = json.load(open(EVAL_PATH))["pso"]

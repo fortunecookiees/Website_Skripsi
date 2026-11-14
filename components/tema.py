@@ -6,7 +6,7 @@ import streamlit as st
 from .logo import hiasan_uri
 
 _CSS = Path(__file__).with_name("styles.css")
-KUNCI_HALAMAN = "_halaman_aktif"  # (nama menu, ikon material) diisi app.py sebelum halaman dijalankan
+KUNCI_HALAMAN = "_halaman_aktif"
 
 
 def pasang_css() -> None:

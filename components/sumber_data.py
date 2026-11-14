@@ -34,13 +34,9 @@ def tanggal_terakhir() -> pd.Timestamp:
     return dataset()["tanggal"].max()
 
 
-# ---------------------------------------------------------------------
-# Data Dashboard (Mode Aktual & titik awal simulasi): versi aktif admin, atau dataset penelitian.
-# Evaluation, Data Historis, dan rentang slider TETAP memakai dataset() penelitian.
-# ---------------------------------------------------------------------
 @st.cache_data(ttl=300, show_spinner=False)
 def _dashboard() -> tuple[pd.DataFrame, SumberDashboard]:
-    from components.akun import klien_admin  # impor lokal: hindari impor melingkar
+    from components.akun import klien_admin
     konfigurasi, _ = klien_admin()
     unduh = None
     if konfigurasi is not None:
